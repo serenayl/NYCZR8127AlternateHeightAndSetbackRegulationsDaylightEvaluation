@@ -1,0 +1,82 @@
+{
+  "$schema": "https://hypar.io/Schemas/Function.json",
+  "id": "2b918420-b91c-4a55-9236-fda279a957d5",
+  "name": "NYC ZR 81-27: Alternate Height and Setback Regulations - Daylight Evaluation",
+  "description": "C# in-progress version of this",
+  "language": "C#",
+  "model_dependencies": [
+    {
+      "autohide": false,
+      "name": "Envelope",
+      "optional": false
+    },
+    {
+      "autohide": false,
+      "name": "Site",
+      "optional": false
+    }
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "Vantage Streets": {
+        "description": "A list of vantage streets to calculate for",
+        "default": [],
+        "type": "array",
+        "$hyparOrder": 0,
+        "items": {
+          "name": "Vantage Street",
+          "description": "A vantage street for calculation",
+          "default": null,
+          "type": "object",
+          "properties": {
+            "Name": {
+              "type": "string",
+              "description": "Name of your vantage street",
+              "default": "Unknown"
+            },
+            "Line": {
+              "description": "A line representing your vantage street, touching the lot line.",
+              "$ref": "https://hypar.io/Schemas/Geometry/Line.json"
+            },
+            "Width": {
+              "description": "Width of your vantage street",
+              "default": "60ft",
+              "type": "string",
+              "enum": [
+                "60ft",
+                "75ft",
+                "80ft",
+                "100ft",
+                "140ft (Park Avenue)"
+              ]
+            },
+            "Street Wall Continuity": {
+              "type": "boolean",
+              "description": "Whether your vantage street is on a street designated in the zoning code as 'desired street wall continuity.' See Section 81-43: https://zr.planning.nyc.gov/article-viii/chapter-1#81-43."
+            }
+          }
+        }
+      },
+      "Qualify for East Midtown Subdistrict": {
+        "type": "boolean",
+        "$hyparOrder": 1,
+        "description": "Whether your site is subject to the height and setback modifications specified in section 81-663. Modifications made: - Daylight blockage will be calculated at the intersection of 150' height projected downward, and using the input building from 150' upward. - There will be no encroachment penalty - Daylight credit will be given even if street continuity is on."
+      },
+      "Debug Visualization": {
+        "type": "boolean",
+        "$hyparOrder": 2,
+        "description": "Visualize raw plan and section angles, rather than curved projections on a modified vertical scale."
+      }
+    }
+  },
+  "outputs": [],
+  "element_types": [
+    "https://prod-api.hypar.io/schemas/Envelope",
+    "https://raw.githubusercontent.com/hypar-io/Schemas/master/Site.json",
+    "https://raw.githubusercontent.com/hypar-io/Schemas/daylight-evaluation/NYCDaylightEvaluationVantagePoint.json"
+  ],
+  "repository_url": "",
+  "source_file_key": null,
+  "preview_image": null
+}
