@@ -8,12 +8,17 @@
     {
       "autohide": false,
       "name": "Envelope",
-      "optional": false
+      "optional": true
     },
     {
       "autohide": false,
       "name": "Site",
-      "optional": false
+      "optional": true
+    },
+    {
+      "autohide": false,
+      "name": "EnvelopeAndSite",
+      "optional": true
     }
   ],
   "input_schema": {
