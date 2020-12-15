@@ -63,7 +63,8 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                 var midpoint = vantageStreet.Line.PointAt(0.5);
                 var lotLines = siteRect.Segments().OrderBy(segment => midpoint.DistanceTo(segment)).ToList();
                 var nearLotLine = lotLines[0];
-                var directionToStreet = new Vector3(nearLotLine.PointAt(0.5) - siteCentroid).Unitized() * Lookups.CenterlineDistances[vantageStreet.Width] / 2;
+                var centerlineOffsetDist = Lookups.CenterlineDistances[vantageStreet.Width] / 2;
+                var directionToStreet = new Vector3(nearLotLine.PointAt(0.5) - siteCentroid).Unitized() * centerlineOffsetDist;
                 var centerline = new Line(nearLotLine.Start + directionToStreet, nearLotLine.End + directionToStreet);
                 model.AddElement(new ModelCurve(centerline));
                 var vantagePoints = VantagePoint.GetVantagePoints(centerline, nearLotLine, model);
@@ -78,6 +79,8 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                         }
                     }
                 }
+
+                Projection.DrawDiagram(centerlineOffsetDist, model);
             }
 
             output.Model = model;

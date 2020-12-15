@@ -43,12 +43,22 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             var s = this.GetS(point);
             var d = this.GetD(point);
             var h = point.Z;
-            var planAngle = Math.Atan(s / d) * (180 / Math.PI);
-            var sectionAngle = Math.Atan(h / s) * (180 / Math.PI);
+            var planAngle = GetPlanAngle(s, d);
+            var sectionAngle = GetSectionAngle(h, s);
             // Console.WriteLine("--");
             // Console.WriteLine($"{Math.Round(Units.MetersToFeet(s))}, {Math.Round(Units.MetersToFeet(d))}, {planAngle}");
             // Console.WriteLine($"{Math.Round(Units.MetersToFeet(h))}, {Math.Round(Units.MetersToFeet(s))}, {sectionAngle}");
             return new PlanAndSectionAngle(planAngle, sectionAngle);
+        }
+
+        public static double GetPlanAngle(double s, double d)
+        {
+            return Math.Atan(s / d) * (180 / Math.PI);
+        }
+
+        public static double GetSectionAngle(double h, double s)
+        {
+            return Math.Atan(h / s) * (180 / Math.PI);
         }
 
         private double GetS(Vector3 point)
@@ -58,7 +68,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
 
         private double GetD(Vector3 point)
         {
-            return Math.Abs(point.DistanceTo(this.dPlane));
+            return point.DistanceTo(this.dPlane);
         }
 
         /// <summary>
