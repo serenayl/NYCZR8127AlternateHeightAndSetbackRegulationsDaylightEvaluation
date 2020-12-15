@@ -68,9 +68,15 @@
         "$hyparOrder": 1,
         "description": "Whether your site is subject to the height and setback modifications specified in section 81-663. Modifications made: - Daylight blockage will be calculated at the intersection of 150' height projected downward, and using the input building from 150' upward. - There will be no encroachment penalty - Daylight credit will be given even if street continuity is on."
       },
+      "Skip Subdivide": {
+        "type": "boolean",
+        "default": false,
+        "$hyparOrder": 2,
+        "description": "Skip the portion of the code that subdivides your non-vertical edges into the 10' segments as specified by the code. Use this if your analysis is taking too long or timing out. Results will be less visually accurate and possibly numerically accurate, but should give you a reasonable estimate of results."
+      },
       "Debug Visualization": {
         "type": "boolean",
-        "$hyparOrder": 2,
+        "$hyparOrder": 3,
         "description": "Visualize raw plan and section angles, rather than curved projections on a modified vertical scale."
       }
     }

@@ -29,17 +29,18 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
     {
         [Newtonsoft.Json.JsonConstructor]
         
-        public NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationInputs(IList<VantageStreets> @vantageStreets, bool @qualifyForEastMidtownSubdistrict, bool @debugVisualization, string bucketName, string uploadsBucket, Dictionary<string, string> modelInputKeys, string gltfKey, string elementsKey, string ifcKey):
+        public NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationInputs(IList<VantageStreets> @vantageStreets, bool @qualifyForEastMidtownSubdistrict, bool @skipSubdivide, bool @debugVisualization, string bucketName, string uploadsBucket, Dictionary<string, string> modelInputKeys, string gltfKey, string elementsKey, string ifcKey):
         base(bucketName, uploadsBucket, modelInputKeys, gltfKey, elementsKey, ifcKey)
         {
             var validator = Validator.Instance.GetFirstValidatorForType<NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationInputs>();
             if(validator != null)
             {
-                validator.PreConstruct(new object[]{ @vantageStreets, @qualifyForEastMidtownSubdistrict, @debugVisualization});
+                validator.PreConstruct(new object[]{ @vantageStreets, @qualifyForEastMidtownSubdistrict, @skipSubdivide, @debugVisualization});
             }
         
             this.VantageStreets = @vantageStreets;
             this.QualifyForEastMidtownSubdistrict = @qualifyForEastMidtownSubdistrict;
+            this.SkipSubdivide = @skipSubdivide;
             this.DebugVisualization = @debugVisualization;
         
             if(validator != null)
@@ -55,6 +56,10 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         /// <summary>Whether your site is subject to the height and setback modifications specified in section 81-663. Modifications made: - Daylight blockage will be calculated at the intersection of 150' height projected downward, and using the input building from 150' upward. - There will be no encroachment penalty - Daylight credit will be given even if street continuity is on.</summary>
         [Newtonsoft.Json.JsonProperty("Qualify for East Midtown Subdistrict", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public bool QualifyForEastMidtownSubdistrict { get; set; }
+    
+        /// <summary>Skip the portion of the code that subdivides your non-vertical edges into the 10' segments as specified by the code. Use this if your analysis is taking too long or timing out. Results will be less visually accurate and possibly numerically accurate, but should give you a reasonable estimate of results.</summary>
+        [Newtonsoft.Json.JsonProperty("Skip Subdivide", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public bool SkipSubdivide { get; set; } = false;
     
         /// <summary>Visualize raw plan and section angles, rather than curved projections on a modified vertical scale.</summary>
         [Newtonsoft.Json.JsonProperty("Debug Visualization", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]

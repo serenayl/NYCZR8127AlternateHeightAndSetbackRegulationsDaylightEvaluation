@@ -30,12 +30,12 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                 inputModels.TryGetValue("Site", out var siteModel);
                 inputModels.TryGetValue("Envelope", out var envelopeModel);
 
-                siteInput = getSite(inputModels, siteModel);
+                siteInput = GetSite(inputModels, siteModel);
                 envelopes = GetEnvelopes(inputModels, envelopeModel);
             }
             else
             {
-                siteInput = getSite(inputModels, envelopeAndSite);
+                siteInput = GetSite(inputModels, envelopeAndSite);
                 envelopes = GetEnvelopes(inputModels, envelopeAndSite);
             }
 
@@ -48,6 +48,10 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                 throw new ArgumentException("There were no envelopes found. Please make sure you either meet the dependency of 'Envelope' or the dependency of 'EnvelopeAndSite.");
             }
 
+            SolidAnalysisObject.model = model;
+            SolidAnalysisObject.skipSubdivide = input.SkipSubdivide;
+
+            var analysisObjects = SolidAnalysisObject.MakeFromEnvelopes(envelopes);
             var site = siteInput.Perimeter.Bounds();
             var siteRect = Polygon.Rectangle(new Vector3(site.Min.X, site.Min.Y), new Vector3(site.Max.X, site.Max.Y));
             var siteCentroid = siteRect.Centroid();
@@ -62,9 +66,18 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                 var directionToStreet = new Vector3(nearLotLine.PointAt(0.5) - siteCentroid).Unitized() * Lookups.CenterlineDistances[vantageStreet.Width] / 2;
                 var centerline = new Line(nearLotLine.Start + directionToStreet, nearLotLine.End + directionToStreet);
                 model.AddElement(new ModelCurve(centerline));
-                Console.WriteLine($"added centerline: {centerline.Start.X}, {centerline.End.X}, {centerline.Start.Y}");
-                var vantagePoints = VantagePoint.getVantagePoints(centerline, lotLines, model);
-                // var vantagePoints = (centerline, lotLines);
+                var vantagePoints = VantagePoint.GetVantagePoints(centerline, nearLotLine, model);
+
+                foreach (var vantagePoint in vantagePoints)
+                {
+                    foreach (var analysisObject in analysisObjects)
+                    {
+                        foreach (var point in analysisObject.points)
+                        {
+                            var planAndSectionAngle = vantagePoint.GetPlanAndSectionAngle(point.Value);
+                        }
+                    }
+                }
             }
 
             output.Model = model;
@@ -73,7 +86,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         }
 
         // Grab the biggest site's bounding box from the model
-        public static Site getSite(Dictionary<string, Model> inputModels, Model model)
+        public static Site GetSite(Dictionary<string, Model> inputModels, Model model)
         {
             if (model == null)
             {
