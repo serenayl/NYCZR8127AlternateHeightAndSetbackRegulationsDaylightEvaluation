@@ -35,7 +35,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             this.ninetyDegreeDirection = ninetyDegreeDirection;
 
             this.sPlane = new Plane(point, ninetyDegreeDirection);
-            this.dPlane = new Plane(point, startDirection);
+            this.dPlane = new Plane(point, startDirection * -1);
         }
 
         public PlanAndSectionAngle GetPlanAndSectionAngle(Vector3 point)
@@ -53,7 +53,12 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
 
         public static double GetPlanAngle(double s, double d)
         {
-            return Math.Atan(s / d) * (180 / Math.PI);
+            var angle = Math.Atan(s / d) * (180 / Math.PI);
+            if (angle < 0)
+            {
+                return -90 - angle;
+            }
+            return 90 - angle;
         }
 
         public static double GetSectionAngle(double h, double s)

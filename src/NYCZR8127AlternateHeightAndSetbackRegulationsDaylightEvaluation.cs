@@ -67,20 +67,76 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                 var directionToStreet = new Vector3(nearLotLine.PointAt(0.5) - siteCentroid).Unitized() * centerlineOffsetDist;
                 var centerline = new Line(nearLotLine.Start + directionToStreet, nearLotLine.End + directionToStreet);
                 model.AddElement(new ModelCurve(centerline));
+
                 var vantagePoints = VantagePoint.GetVantagePoints(centerline, nearLotLine, model);
+
+                int pointIndex = 0;
 
                 foreach (var vantagePoint in vantagePoints)
                 {
+                    var transform = new Transform(new Vector3(90.0 + pointIndex * 200.0, Units.FeetToMeters(100) + 20.0));
+                    Projection.DrawDiagram(centerlineOffsetDist, model, transform, input.DebugVisualization);
+
                     foreach (var analysisObject in analysisObjects)
                     {
+                        var coordinates = new Dictionary<long, Vector3>();
+
                         foreach (var point in analysisObject.points)
                         {
                             var planAndSectionAngle = vantagePoint.GetPlanAndSectionAngle(point.Value);
+                            var coordinate = input.DebugVisualization ? new Vector3(planAndSectionAngle.plan, planAndSectionAngle.section) : Projection.MapCoordinate(planAndSectionAngle.plan, planAndSectionAngle.section);
+                            coordinates.Add(point.Key, coordinate);
+                        }
+
+                        var edges = new Dictionary<long, List<Vector3>>();
+
+                        foreach (var lineMapping in analysisObject.lines)
+                        {
+                            var points = new List<Vector3>();
+
+                            foreach (var coordinateId in lineMapping.Value)
+                            {
+                                coordinates.TryGetValue(coordinateId, out var point);
+                                points.Add(point);
+                            }
+                            var polyline = new Polyline(points);
+                            var modelCurve = new ModelCurve(polyline, new Material("red", Colors.Red), transform);
+                            model.AddElement(modelCurve);
+                            edges.Add(lineMapping.Key, points);
+                        }
+                        foreach (var surface in analysisObject.surfaces)
+                        {
+                            var vertices = new List<Vector3>();
+
+                            foreach (var polylineId in surface)
+                            {
+                                if (edges.TryGetValue(polylineId, out var points))
+                                {
+                                    vertices.AddRange(points.SkipLast(1));
+                                }
+                            }
+
+                            Console.WriteLine(vertices.Count);
+
+                            try
+                            {
+                                var polygon = new Polygon(vertices);
+                                var panel = new Panel(polygon, new Material("panel", Colors.Darkgray), transform);
+                                model.AddElement(panel);
+                                Console.WriteLine("Success");
+                            }
+                            catch (ArgumentException e)
+                            {
+                                Console.WriteLine("Failure");
+                            }
+
+
                         }
                     }
+                    pointIndex += 1;
                 }
 
-                Projection.DrawDiagram(centerlineOffsetDist, model);
+
             }
 
             output.Model = model;

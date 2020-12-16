@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Elements;
 using Elements.Geometry;
+using Elements.Spatial;
 
 namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
 {
@@ -37,11 +39,33 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                     var dist = start.DistanceTo(end);
                     var line = new Line(start, end);
                     model.AddElement(new ModelCurve(line));
-                    if (!skipSubdivide && dist > divisionLength)
+                    if (!skipSubdivide && dist > divisionLength && (start.X != end.X || start.Y != end.Y))
                     {
+                        var indices = new List<long>() { edge.Value.Left.Vertex.Id, edge.Value.Right.Vertex.Id };
+
+                        // var grid = new Grid1d(line);
+                        // grid.DivideByFixedLength(divisionLength, FixedDivisionMode.RemainderAtBothEnds);
+                        // var cells = grid.GetCells();
+
+                        // // Get lines representing each cell
+                        // var cellLines = cells.Select(c => c.GetCellGeometry()).OfType<Line>().ToArray();
+
+                        // foreach (var cellLine in cellLines)
+                        // {
+                        //     var index = maxVertexKey + 1;
+                        //     var point = cellLine.PointAt(1.0);
+                        //     // TODO: this is duped above
+                        //     var locallyTransformedPoint = solidTransform == null ? new Vector3(point) : solidTransform.OfVector(point);
+                        //     var globallyTransformedPoint = transform.OfVector(locallyTransformedPoint);
+                        //     this.points.Add(index, globallyTransformedPoint);
+                        //     indices.Add(index);
+                        //     maxVertexKey = index;
+                        // }
+
+                        // Console.WriteLine("Subdivide this line");
                         // TODO: subdivide this line
                         // currently no difference between the else
-                        this.lines.Add(edge.Key, new List<long>() { edge.Value.Left.Vertex.Id, edge.Value.Right.Vertex.Id });
+                        this.lines.Add(edge.Key, indices);
                     }
                     else
                     {

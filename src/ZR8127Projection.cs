@@ -8,26 +8,30 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
     public class Projection
     {
         private static double intersectionAt90Deg = 140.0;
-        private static double rawProjectionAt90Deg = mapCoordinate(0.0, 90.0).Y;
+        private static double rawProjectionAt90Deg = MapCoordinate(0.0, 90.0).Y;
 
         private static double projectionFactor = intersectionAt90Deg / rawProjectionAt90Deg;
-        public static void DrawDiagram(double centerlineDistFromNearLot, Model model, Boolean useRawAngles = false)
+
+        private static Material majorLinesMaterial = new Material("Major Lines", Colors.Blue);
+        private static Material minorLinesMaterial = new Material("Minor Lines", Colors.Cyan);
+        public static void DrawDiagram(double centerlineDistFromNearLot, Model model, Transform transform = null, Boolean useRawAngles = false)
         {
             var sectionAngles = new List<double>();
             var curSectionAngle = 0.0;
-            var transform = new Transform(new Vector3(90.0, Units.FeetToMeters(100) + 20.0));
 
-            while (curSectionAngle < 70)
+            while (curSectionAngle <= 70)
             {
+                sectionAngles.Add(curSectionAngle);
                 curSectionAngle = curSectionAngle + 5.0;
-                sectionAngles.Add(curSectionAngle);
             }
 
-            while (curSectionAngle < 89)
+            while (curSectionAngle < 90)
             {
-                curSectionAngle = curSectionAngle + 1.0;
                 sectionAngles.Add(curSectionAngle);
+                curSectionAngle = curSectionAngle + 1.0;
             }
+
+            var i = 0;
 
             foreach (var sectionAngle in sectionAngles)
             {
@@ -41,26 +45,35 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                     }
                     else
                     {
-                        coordinates.Add(mapCoordinate(planAngle, sectionAngle));
+                        coordinates.Add(MapCoordinate(planAngle, sectionAngle));
                     }
                 }
 
+                var material = i % 2 == 0 ? majorLinesMaterial : minorLinesMaterial;
+
                 var polyline = new Polyline(coordinates);
-                var modelCurve = new ModelCurve(polyline, new Material("red", Colors.Red), transform);
+                var modelCurve = new ModelCurve(polyline, material, transform);
                 model.AddElement(modelCurve);
+
+                i += 1;
             }
 
-            var yTop = useRawAngles ? 90.0 : mapCoordinate(0.0, 90.0).Y;
+            var j = 0;
 
-            for (double s = Units.FeetToMeters(-250.0); s <= Units.FeetToMeters(250.0); s += Units.FeetToMeters(5.0))
+            var yTop = useRawAngles ? 90.0 : MapCoordinate(0.0, 90.0).Y;
+
+            for (double dFt = -250.0; dFt <= 250.0; dFt += 5.0)
             {
-                var planAngle = VantagePoint.GetPlanAngle(s, centerlineDistFromNearLot);
+                var d = Units.FeetToMeters(dFt);
+                var planAngle = VantagePoint.GetPlanAngle(centerlineDistFromNearLot, d);
                 var line = new Line(
                     new Vector3(planAngle, 0.0),
                     new Vector3(planAngle, yTop)
                 );
-                var modelCurve = new ModelCurve(line, new Material("red", Colors.Red), transform);
+                var material = j % 5 == 0 ? majorLinesMaterial : minorLinesMaterial;
+                var modelCurve = new ModelCurve(line, material, transform);
                 model.AddElement(modelCurve);
+                j += 1;
             }
         }
 
@@ -70,7 +83,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         /// <param name="planAngle"></param>
         /// <param name="sectionAngle"></param>
         /// <returns></returns>
-        public static Vector3 mapCoordinate(double planAngle, double sectionAngle)
+        public static Vector3 MapCoordinate(double planAngle, double sectionAngle)
         {
             var angle = Math.Atan(
                 Math.Tan(sectionAngle / 180.0 * Math.PI) * Math.Cos(planAngle / 180 * Math.PI)
