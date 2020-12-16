@@ -12,9 +12,9 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
 
         private static double projectionFactor = intersectionAt90Deg / rawProjectionAt90Deg;
 
-        private static Material majorLinesMaterial = new Material("Major Lines", Colors.Blue);
-        private static Material minorLinesMaterial = new Material("Minor Lines", Colors.Cyan);
-        public static void DrawDiagram(double centerlineDistFromNearLot, Model model, Transform transform = null, Boolean useRawAngles = false)
+        private static Material majorLinesMaterial = Settings.Materials[Settings.MaterialPalette.GridlinesMajor];
+        private static Material minorLinesMaterial = Settings.Materials[Settings.MaterialPalette.GridlinesMinor];
+        public static void DrawDiagram(double centerlinDistFromFrontLot, Model model, Transform transform = null, Boolean useRawAngles = false)
         {
             var sectionAngles = new List<double>();
             var curSectionAngle = 0.0;
@@ -65,7 +65,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             for (double dFt = -250.0; dFt <= 250.0; dFt += 5.0)
             {
                 var d = Units.FeetToMeters(dFt);
-                var planAngle = VantagePoint.GetPlanAngle(centerlineDistFromNearLot, d);
+                var planAngle = VantagePoint.GetPlanAngle(centerlinDistFromFrontLot, d);
                 var line = new Line(
                     new Vector3(planAngle, 0.0),
                     new Vector3(planAngle, yTop)

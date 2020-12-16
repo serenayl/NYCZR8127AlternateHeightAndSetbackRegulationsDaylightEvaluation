@@ -15,7 +15,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         public static Boolean skipSubdivide = false;
         public Dictionary<long, Vector3> points = new Dictionary<long, Vector3>();
         public Dictionary<long, List<long>> lines = new Dictionary<long, List<long>>();
-        public List<List<long>> surfaces = new List<List<long>>();
+        public List<List<Elements.Geometry.Solids.HalfEdge>> surfaces = new List<List<Elements.Geometry.Solids.HalfEdge>>();
         public SolidAnalysisObject(Elements.Geometry.Solids.SolidOperation solid, Transform transform)
         {
             var solidTransform = solid.LocalTransform;
@@ -41,30 +41,27 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                     model.AddElement(new ModelCurve(line));
                     if (!skipSubdivide && dist > divisionLength && (start.X != end.X || start.Y != end.Y))
                     {
-                        var indices = new List<long>() { edge.Value.Left.Vertex.Id, edge.Value.Right.Vertex.Id };
+                        var indices = new List<long>() { edge.Value.Left.Vertex.Id };
 
-                        // var grid = new Grid1d(line);
-                        // grid.DivideByFixedLength(divisionLength, FixedDivisionMode.RemainderAtBothEnds);
-                        // var cells = grid.GetCells();
+                        var grid = new Grid1d(line);
+                        grid.DivideByFixedLength(divisionLength, FixedDivisionMode.RemainderAtBothEnds);
+                        var cells = grid.GetCells();
 
-                        // // Get lines representing each cell
-                        // var cellLines = cells.Select(c => c.GetCellGeometry()).OfType<Line>().ToArray();
+                        // Get lines representing each 10' cell
+                        var cellLines = cells.Select(c => c.GetCellGeometry()).OfType<Line>().ToArray();
 
-                        // foreach (var cellLine in cellLines)
-                        // {
-                        //     var index = maxVertexKey + 1;
-                        //     var point = cellLine.PointAt(1.0);
-                        //     // TODO: this is duped above
-                        //     var locallyTransformedPoint = solidTransform == null ? new Vector3(point) : solidTransform.OfVector(point);
-                        //     var globallyTransformedPoint = transform.OfVector(locallyTransformedPoint);
-                        //     this.points.Add(index, globallyTransformedPoint);
-                        //     indices.Add(index);
-                        //     maxVertexKey = index;
-                        // }
+                        // Add end of each division except for last point
+                        foreach (var cellLine in cellLines.SkipLast(1))
+                        {
+                            var index = maxVertexKey + 1;
+                            var point = cellLine.PointAt(1.0);
+                            this.points.Add(index, point);
+                            indices.Add(index);
+                            maxVertexKey = index;
+                        }
 
-                        // Console.WriteLine("Subdivide this line");
-                        // TODO: subdivide this line
-                        // currently no difference between the else
+                        // Add right point
+                        indices.Add(edge.Value.Right.Vertex.Id);
                         this.lines.Add(edge.Key, indices);
                     }
                     else
@@ -81,10 +78,10 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
 
             foreach (var face in solid.Solid.Faces.Values)
             {
-                var edges = new List<long>();
+                var edges = new List<Elements.Geometry.Solids.HalfEdge>();
                 foreach (var edge in face.Outer.Edges)
                 {
-                    edges.Add(edge.Edge.Id);
+                    edges.Add(edge);
                 }
                 // TODO: do not include faces that sit at zero
                 this.surfaces.Add(edges);

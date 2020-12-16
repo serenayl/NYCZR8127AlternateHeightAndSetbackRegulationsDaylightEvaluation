@@ -8,6 +8,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
 {
     public static class NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
     {
+
         /// <summary>
         /// C# in-progress version of this
         /// </summary>
@@ -62,20 +63,22 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             {
                 var midpoint = vantageStreet.Line.PointAt(0.5);
                 var lotLines = siteRect.Segments().OrderBy(segment => midpoint.DistanceTo(segment)).ToList();
-                var nearLotLine = lotLines[0];
-                var centerlineOffsetDist = Lookups.CenterlineDistances[vantageStreet.Width] / 2;
-                var directionToStreet = new Vector3(nearLotLine.PointAt(0.5) - siteCentroid).Unitized() * centerlineOffsetDist;
-                var centerline = new Line(nearLotLine.Start + directionToStreet, nearLotLine.End + directionToStreet);
+                var frontLotLine = lotLines[0];
+                var centerlineOffsetDist = Settings.CenterlineDistances[vantageStreet.Width] / 2;
+                var directionToStreet = new Vector3(frontLotLine.PointAt(0.5) - siteCentroid).Unitized() * centerlineOffsetDist;
+                var centerline = new Line(frontLotLine.Start + directionToStreet, frontLotLine.End + directionToStreet);
                 model.AddElement(new ModelCurve(centerline));
 
-                var vantagePoints = VantagePoint.GetVantagePoints(centerline, nearLotLine, model);
+                var vantagePoints = VantagePoint.GetVantagePoints(centerline, frontLotLine, model);
 
-                int pointIndex = 0;
+                int vpIndex = 0;
 
                 foreach (var vantagePoint in vantagePoints)
                 {
-                    var transform = new Transform(new Vector3(90.0 + pointIndex * 200.0, Units.FeetToMeters(100) + 20.0));
+                    var transform = new Transform(new Vector3(90.0 + vpIndex * 200.0, Units.FeetToMeters(100) + 20.0));
                     Projection.DrawDiagram(centerlineOffsetDist, model, transform, input.DebugVisualization);
+
+                    var polygons = new List<Polygon>();
 
                     foreach (var analysisObject in analysisObjects)
                     {
@@ -89,6 +92,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                         }
 
                         var edges = new Dictionary<long, List<Vector3>>();
+                        var edgeMaterial = Settings.Materials[Settings.MaterialPalette.BuildingEdges];
 
                         foreach (var lineMapping in analysisObject.lines)
                         {
@@ -99,44 +103,65 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                                 coordinates.TryGetValue(coordinateId, out var point);
                                 points.Add(point);
                             }
-                            var polyline = new Polyline(points);
-                            var modelCurve = new ModelCurve(polyline, new Material("red", Colors.Red), transform);
-                            model.AddElement(modelCurve);
+
+                            try
+                            {
+                                var polyline = new Polyline(points);
+                                var modelCurve = new ModelCurve(polyline, edgeMaterial, transform);
+                                model.AddElement(modelCurve);
+                            }
+                            catch (ArgumentException e)
+                            {
+                                Console.WriteLine($"Failure to draw curve: {e.Message}");
+                                foreach (var point in points)
+                                {
+                                    Console.WriteLine($"-- {point.X}, {point.Y}, {point.Z}");
+                                }
+                            }
+
                             edges.Add(lineMapping.Key, points);
                         }
+
                         foreach (var surface in analysisObject.surfaces)
                         {
                             var vertices = new List<Vector3>();
 
-                            foreach (var polylineId in surface)
+                            foreach (var edge in surface)
                             {
-                                if (edges.TryGetValue(polylineId, out var points))
+                                var isLeftToRight = edge.Vertex.Id == edge.Edge.Left.Vertex.Id;
+
+                                if (edges.TryGetValue(edge.Edge.Id, out var points))
                                 {
-                                    vertices.AddRange(points.SkipLast(1));
+                                    vertices.AddRange(isLeftToRight ? points.SkipLast(1) : points.AsEnumerable().Reverse().SkipLast(1));
                                 }
                             }
-
-                            Console.WriteLine(vertices.Count);
 
                             try
                             {
                                 var polygon = new Polygon(vertices);
-                                var panel = new Panel(polygon, new Material("panel", Colors.Darkgray), transform);
-                                model.AddElement(panel);
-                                Console.WriteLine("Success");
+                                if (polygon.Area() > 0)
+                                {
+                                    polygons.Add(polygon);
+                                }
                             }
                             catch (ArgumentException e)
                             {
-                                Console.WriteLine("Failure");
+                                Console.WriteLine($"Failure to create polygon: {e.Message}");
                             }
-
-
                         }
                     }
-                    pointIndex += 1;
+
+                    var unioned = Polygon.UnionAll(polygons);
+                    foreach (var unionedSilhouette in unioned)
+                    {
+                        var panel = new Panel(unionedSilhouette, Settings.Materials[Settings.MaterialPalette.Silhouette], transform);
+                        model.AddElement(panel);
+                    }
+
+                    vpIndex += 1;
+
+
                 }
-
-
             }
 
             output.Model = model;
