@@ -6,7 +6,6 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
 {
     public class Settings
     {
-
         public enum MaterialPalette
         {
             Silhouette = 0,
@@ -26,11 +25,11 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             },
             {
                 MaterialPalette.BuildingEdges,
-                new Material("building edge", Colors.Blue)
+                new Material("building edge", Colors.Black)
             },
             {
                 MaterialPalette.GridlinesMajor,
-                new Material("major gridline", Colors.Black)
+                new Material("major gridline", Colors.Darkgray)
             },
             {
                 MaterialPalette.GridlinesMinor,

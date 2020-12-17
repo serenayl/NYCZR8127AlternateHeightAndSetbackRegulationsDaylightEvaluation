@@ -67,7 +67,9 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                 foreach (var vp in vantagePoints)
                 {
                     var transform = new Transform(new Vector3(90.0 + vpIndex * 200.0, Units.FeetToMeters(100) + 20.0));
-                    Projection.DrawDiagram(vp, model, transform, input.DebugVisualization);
+                    vp.Diagram.Draw(model, transform, input.DebugVisualization);
+
+                    // TODO: move below drawing code and calculations to diagram
 
                     var polygons = new List<Polygon>();
 

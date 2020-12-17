@@ -32,10 +32,12 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         public List<double> DaylightBoundaries = new List<double>() { -90.0, -90.0 };
         public List<Vector3> DaylightBoundariesPoints = new List<Vector3>() { new Vector3(), new Vector3() };
 
+        public Diagram Diagram;
+
         private Plane sPlane;
         private Plane dPlane;
 
-        public static double VantageDistanceInFt = 259.0;
+        public static double VantageDistanceInFt = 250.0;
         public static double VantageDistance = Units.FeetToMeters(VantageDistanceInFt);
         private static double longCenterlineLength = VantageDistance * 2;
 
@@ -61,6 +63,8 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             var nearFarLines = new List<Line>() { lotLinesByDistToStreet[1], lotLinesByDistToStreet[2] }.OrderBy(line => this.Point.DistanceTo(line)).ToList();
             this.NearLotLine = nearFarLines[0];
             this.FarLotLine = nearFarLines[1];
+
+            this.Diagram = new Diagram(this);
         }
 
         public AnalysisPoint GetAnalysisPoint(Vector3 point, Boolean useDebugVisualization = false)
@@ -70,6 +74,11 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             var h = point.Z;
             var planAngle = GetPlanAngle(s, d);
             var sectionAngle = GetSectionAngle(h, s);
+            return this.GetAnalysisPoint(planAngle, sectionAngle, useDebugVisualization);
+        }
+
+        public AnalysisPoint GetAnalysisPoint(double planAngle, double sectionAngle, Boolean useDebugVisualization = false)
+        {
             var planAndSectionAngle = new AnalysisPoint(planAngle, sectionAngle);
             if (useDebugVisualization)
             {
@@ -77,7 +86,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             }
             else
             {
-                planAndSectionAngle.DrawCoordinate = Projection.MapCoordinate(planAngle, sectionAngle);
+                planAndSectionAngle.DrawCoordinate = Diagram.MapCoordinate(planAngle, sectionAngle);
             }
             return planAndSectionAngle;
         }
