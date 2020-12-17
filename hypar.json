@@ -56,6 +56,11 @@
                 "140ft (Park Avenue)"
               ]
             },
+            "Block Depth In Feet": {
+              "description": "The depth of the block (not lot!) from this vantage street. Is used to calculate daylight boundaries, and only matters if block depth is less than 200'.",
+              "default": 200,
+              "type": "number"
+            },
             "Street Wall Continuity": {
               "type": "boolean",
               "description": "Whether your vantage street is on a street designated in the zoning code as 'desired street wall continuity.' See Section 81-43: https://zr.planning.nyc.gov/article-viii/chapter-1#81-43."

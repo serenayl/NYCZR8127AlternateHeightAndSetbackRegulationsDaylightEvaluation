@@ -55,40 +55,30 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             var analysisObjects = SolidAnalysisObject.MakeFromEnvelopes(envelopes);
             var site = siteInput.Perimeter.Bounds();
             var siteRect = Polygon.Rectangle(new Vector3(site.Min.X, site.Min.Y), new Vector3(site.Max.X, site.Max.Y));
-            var siteCentroid = siteRect.Centroid();
 
             model.AddElement(new ModelCurve(siteRect, name: "Site Bounds Used"));
 
             foreach (var vantageStreet in input.VantageStreets)
             {
-                var midpoint = vantageStreet.Line.PointAt(0.5);
-                var lotLines = siteRect.Segments().OrderBy(segment => midpoint.DistanceTo(segment)).ToList();
-                var frontLotLine = lotLines[0];
-                var centerlineOffsetDist = Settings.CenterlineDistances[vantageStreet.Width] / 2;
-                var directionToStreet = new Vector3(frontLotLine.PointAt(0.5) - siteCentroid).Unitized() * centerlineOffsetDist;
-                var centerline = new Line(frontLotLine.Start + directionToStreet, frontLotLine.End + directionToStreet);
-                model.AddElement(new ModelCurve(centerline));
-
-                var vantagePoints = VantagePoint.GetVantagePoints(centerline, frontLotLine, model);
+                var vantagePoints = VantagePoint.GetVantagePoints(siteRect, vantageStreet, model);
 
                 int vpIndex = 0;
 
-                foreach (var vantagePoint in vantagePoints)
+                foreach (var vp in vantagePoints)
                 {
                     var transform = new Transform(new Vector3(90.0 + vpIndex * 200.0, Units.FeetToMeters(100) + 20.0));
-                    Projection.DrawDiagram(centerlineOffsetDist, model, transform, input.DebugVisualization);
+                    Projection.DrawDiagram(vp, model, transform, input.DebugVisualization);
 
                     var polygons = new List<Polygon>();
 
                     foreach (var analysisObject in analysisObjects)
                     {
-                        var coordinates = new Dictionary<long, Vector3>();
+                        var analysisPoints = new Dictionary<long, AnalysisPoint>();
 
                         foreach (var point in analysisObject.points)
                         {
-                            var planAndSectionAngle = vantagePoint.GetPlanAndSectionAngle(point.Value);
-                            var coordinate = input.DebugVisualization ? new Vector3(planAndSectionAngle.plan, planAndSectionAngle.section) : Projection.MapCoordinate(planAndSectionAngle.plan, planAndSectionAngle.section);
-                            coordinates.Add(point.Key, coordinate);
+                            var analysisPoint = vp.GetAnalysisPoint(point.Value, input.DebugVisualization);
+                            analysisPoints.Add(point.Key, analysisPoint);
                         }
 
                         var edges = new Dictionary<long, List<Vector3>>();
@@ -100,23 +90,8 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
 
                             foreach (var coordinateId in lineMapping.Value)
                             {
-                                coordinates.TryGetValue(coordinateId, out var point);
-                                points.Add(point);
-                            }
-
-                            try
-                            {
-                                var polyline = new Polyline(points);
-                                var modelCurve = new ModelCurve(polyline, edgeMaterial, transform);
-                                model.AddElement(modelCurve);
-                            }
-                            catch (ArgumentException e)
-                            {
-                                Console.WriteLine($"Failure to draw curve: {e.Message}");
-                                foreach (var point in points)
-                                {
-                                    Console.WriteLine($"-- {point.X}, {point.Y}, {point.Z}");
-                                }
+                                analysisPoints.TryGetValue(coordinateId, out var analysisPoint);
+                                points.Add(analysisPoint.DrawCoordinate);
                             }
 
                             edges.Add(lineMapping.Key, points);
@@ -148,6 +123,25 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                             {
                                 Console.WriteLine($"Failure to create polygon: {e.Message}");
                             }
+                        }
+
+                        foreach (var points in edges.Values)
+                        {
+                            try
+                            {
+                                var polyline = new Polyline(points);
+                                var modelCurve = new ModelCurve(polyline, edgeMaterial, transform);
+                                model.AddElement(modelCurve);
+                            }
+                            catch (ArgumentException e)
+                            {
+                                Console.WriteLine($"Failure to draw curve: {e.Message}");
+                                foreach (var point in points)
+                                {
+                                    Console.WriteLine($"-- {point.X}, {point.Y}, {point.Z}");
+                                }
+                            }
+
                         }
                     }
 

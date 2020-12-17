@@ -12,7 +12,8 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             Silhouette = 0,
             BuildingEdges = 1,
             GridlinesMajor = 10,
-            GridlinesMinor = 11
+            GridlinesMinor = 11,
+            DaylightBoundaries = 12
         }
         public static Dictionary<MaterialPalette, Material> Materials => new Dictionary<MaterialPalette, Material> {
             {
@@ -25,15 +26,19 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             },
             {
                 MaterialPalette.BuildingEdges,
-                new Material("building edge", Colors.Purple)
+                new Material("building edge", Colors.Blue)
             },
             {
                 MaterialPalette.GridlinesMajor,
-                new Material("major gridline", Colors.Blue)
+                new Material("major gridline", Colors.Black)
             },
             {
                 MaterialPalette.GridlinesMinor,
-                new Material( "minor gridline", Colors.Cyan)
+                new Material( "minor gridline", Colors.Gray)
+            },
+            {
+                MaterialPalette.DaylightBoundaries,
+                new Material( "daylight boundary", Colors.Magenta)
             }
         };
 

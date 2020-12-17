@@ -14,7 +14,8 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
 
         private static Material majorLinesMaterial = Settings.Materials[Settings.MaterialPalette.GridlinesMajor];
         private static Material minorLinesMaterial = Settings.Materials[Settings.MaterialPalette.GridlinesMinor];
-        public static void DrawDiagram(double centerlinDistFromFrontLot, Model model, Transform transform = null, Boolean useRawAngles = false)
+        private static Material daylightBoundariesMaterial = Settings.Materials[Settings.MaterialPalette.DaylightBoundaries];
+        public static void DrawDiagram(VantagePoint vp, Model model, Transform transform = null, Boolean useRawAngles = false)
         {
             var sectionAngles = new List<double>();
             var curSectionAngle = 0.0;
@@ -62,10 +63,10 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
 
             var yTop = useRawAngles ? 90.0 : MapCoordinate(0.0, 90.0).Y;
 
-            for (double dFt = -250.0; dFt <= 250.0; dFt += 5.0)
+            for (double dFt = -VantagePoint.VantageDistanceInFt; dFt <= VantagePoint.VantageDistanceInFt; dFt += 5.0)
             {
                 var d = Units.FeetToMeters(dFt);
-                var planAngle = VantagePoint.GetPlanAngle(centerlinDistFromFrontLot, d);
+                var planAngle = VantagePoint.GetPlanAngle(vp.CenterlineOffsetDist, d);
                 var line = new Line(
                     new Vector3(planAngle, 0.0),
                     new Vector3(planAngle, yTop)
@@ -74,6 +75,15 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                 var modelCurve = new ModelCurve(line, material, transform);
                 model.AddElement(modelCurve);
                 j += 1;
+            }
+
+            foreach (double planAngle in vp.DaylightBoundaries)
+            {
+                var line = new Line(
+                    new Vector3(planAngle, 0.0),
+                    new Vector3(planAngle, yTop)
+                );
+                model.AddElement(new ModelCurve(line, daylightBoundariesMaterial, transform));
             }
         }
 
