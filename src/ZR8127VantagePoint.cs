@@ -29,7 +29,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         public Line FrontLotLine;
         public Line RearLotLine;
 
-        public List<double> DaylightBoundaries = new List<double>() { -90.0, -90.0 };
+        public Domain1d DaylightBoundaries;
         public List<Vector3> DaylightBoundariesPoints = new List<Vector3>() { new Vector3(), new Vector3() };
 
         public Diagram Diagram;
@@ -182,6 +182,10 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             }
 
             calculateDaylightBoundaries(vantageStreet, vantagePoints, model);
+            foreach (var vp in vantagePoints)
+            {
+                vp.Diagram.calculateProfileCurves();
+            }
 
             // Visualize if we are able to
             if (model != null)
@@ -193,10 +197,8 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                     model.AddElement(new ModelCurve(new Circle(vp.Point, 1.0).ToPolygon()));
                     model.AddElement(new ModelCurve(new Line(vp.Point, vp.Point + vp.StartDirection), new Material("red", Colors.Red)));
                     model.AddElement(new ModelCurve(new Line(vp.Point, vp.Point + vp.FrontDirection), new Material("blue", Colors.Blue)));
-
                 }
             }
-
 
             return vantagePoints;
         }
@@ -211,7 +213,6 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             foreach (var vp in orderedStreetVantagePts.Take(2))
             {
                 var farPoint = vp.Point + (vp.StartDirection * VantageDistance) + (vp.FrontDirection * vp.CenterlineOffsetDist);
-                vp.DaylightBoundaries[0] = VantagePoint.GetPlanAngle(vp.CenterlineOffsetDist, -VantageDistance);
                 vp.DaylightBoundariesPoints[0] = farPoint;
             }
 
@@ -223,8 +224,6 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                     // Move intersection point of the near lot line and front lot line
                     // towards the rear, to the lesser of 100' or the centerline of the block from the front lot line
                     var pointForBounds = nearPointOnNearLot + vp.FrontDirection * Math.Min(Units.FeetToMeters(100), Units.FeetToMeters(vantageStreet.BlockDepthInFeet / 2));
-                    var analysisPoint = vp.GetAnalysisPoint(pointForBounds);
-                    vp.DaylightBoundaries[1] = analysisPoint.PlanAndSection.X;
                     vp.DaylightBoundariesPoints[1] = pointForBounds;
                 }
             }
@@ -233,26 +232,29 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             {
                 foreach (var vp in orderedStreetVantagePts.SkipLast(1))
                 {
-                    vp.DaylightBoundaries[1] = 0.0;
+                    vp.DaylightBoundariesPoints[1] = vp.Point + (vp.FrontDirection * vp.CenterlineOffsetDist);
                 }
                 var vp1 = orderedStreetVantagePts[0];
                 var vp2 = orderedStreetVantagePts[1];
                 var vp3 = orderedStreetVantagePts[2];
-                var vp1OnFrontLotLine = vp1.Point + (vp1.FrontDirection * vp1.CenterlineOffsetDist);
-                var vp1analysis = vp3.GetAnalysisPoint(vp1OnFrontLotLine);
-                var vp2OnFrontLotLine = vp2.Point + (vp2.FrontDirection * vp2.CenterlineOffsetDist);
-                var vp2analysis = vp3.GetAnalysisPoint(vp2OnFrontLotLine);
-                vp3.DaylightBoundaries[0] = vp1analysis.PlanAndSection.X;
-                vp3.DaylightBoundaries[1] = vp2analysis.PlanAndSection.X;
-                vp3.DaylightBoundariesPoints[0] = vp1OnFrontLotLine;
-                vp3.DaylightBoundariesPoints[1] = vp2OnFrontLotLine;
+                vp3.DaylightBoundariesPoints[0] = vp1.DaylightBoundariesPoints[1];
+                vp3.DaylightBoundariesPoints[1] = vp2.DaylightBoundariesPoints[1];
+            }
 
-                if (vp3.DaylightBoundaries[0] > vp3.DaylightBoundaries[1])
+            foreach (var vp in orderedStreetVantagePts)
+            {
+                var min = vp.GetAnalysisPoint(vp.DaylightBoundariesPoints[0]).PlanAndSection.X;
+                var max = vp.GetAnalysisPoint(vp.DaylightBoundariesPoints[1]).PlanAndSection.X;
+
+                if (max < min)
                 {
-                    vp3.DaylightBoundaries.Reverse();
-                    vp3.DaylightBoundariesPoints.Reverse();
+                    vp.DaylightBoundariesPoints.Reverse();
+                    vp.DaylightBoundaries = new Domain1d(max, min);
                 }
-
+                else
+                {
+                    vp.DaylightBoundaries = new Domain1d(min, max);
+                }
             }
         }
     }

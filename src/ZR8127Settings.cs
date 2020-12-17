@@ -12,7 +12,8 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             BuildingEdges = 1,
             GridlinesMajor = 10,
             GridlinesMinor = 11,
-            DaylightBoundaries = 12
+            DaylightBoundaries = 12,
+            ProfileCurves = 13,
         }
         public static Dictionary<MaterialPalette, Material> Materials => new Dictionary<MaterialPalette, Material> {
             {
@@ -38,6 +39,10 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             {
                 MaterialPalette.DaylightBoundaries,
                 new Material( "daylight boundary", Colors.Magenta)
+            },
+            {
+                MaterialPalette.ProfileCurves,
+                new Material( "profile curve", Colors.Red)
             }
         };
 
