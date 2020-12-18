@@ -27,8 +27,9 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
 
         public Grid1d SectionGrid = makeSectionGrid();
         public Grid1d PlanGrid;
-
         public List<Polyline> ProfileCurves = new List<Polyline>();
+        public List<Polygon> RawSilhouettes;
+        public List<Polygon> DrawSilhouettes;
 
         private VantagePoint vp;
 
@@ -149,7 +150,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         /// <summary>
         /// Draws base/background grid
         /// </summary>
-        private double drawGrid(Model model, Transform transform = null, Boolean useRawAngles = false)
+        private void drawGrid(Model model, Transform transform = null, Boolean useRawAngles = false)
         {
             // Draw horizontal lines
             foreach (var cell in this.SectionGrid.Cells)
@@ -190,7 +191,22 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             // Right edge of chart
             this.drawPlanGridline(model, 90.0, majorLinesMaterial, yTop, transform);
 
-            return yTop;
+            foreach (double planAngle in new List<double>() { vp.DaylightBoundaries.Min, vp.DaylightBoundaries.Max })
+            {
+                var boundary = new Line(
+                    new Vector3(planAngle, 0.0),
+                    new Vector3(planAngle, yTop)
+                );
+                model.AddElement(new ModelCurve(boundary, daylightBoundariesMaterial, transform));
+            }
+
+            foreach (var rawProfileCurve in this.ProfileCurves)
+            {
+                var coordinates = rawProfileCurve.Vertices.Select(pt => this.vp.GetAnalysisPoint(pt.X, pt.Y, useRawAngles).DrawCoordinate).ToArray();
+                var polyline = new Polyline(coordinates);
+                var profileCurve = new ModelCurve(polyline, profileCurveMaterial, transform);
+                model.AddElement(profileCurve);
+            }
         }
 
         #endregion PrivateUtils
@@ -268,25 +284,127 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         /// <summary>
         /// Draw the diagram
         /// </summary>
-        public void Draw(Model model, Transform transform = null, Boolean useRawAngles = false)
+        public void Draw(Model model, List<SolidAnalysisObject> analysisObjects, Transform transform = null, Boolean useRawAngles = false)
         {
-            var yTop = this.drawGrid(model, transform, useRawAngles);
+            this.drawGrid(model, transform, useRawAngles);
 
-            foreach (double planAngle in new List<double>() { vp.DaylightBoundaries.Min, vp.DaylightBoundaries.Max })
+            var rawPolygons = new List<Polygon>();
+            var drawPolygons = new List<Polygon>();
+
+            foreach (var analysisObject in analysisObjects)
             {
-                var boundary = new Line(
-                    new Vector3(planAngle, 0.0),
-                    new Vector3(planAngle, yTop)
-                );
-                model.AddElement(new ModelCurve(boundary, daylightBoundariesMaterial, transform));
+                var analysisPoints = new Dictionary<long, AnalysisPoint>();
+
+                foreach (var point in analysisObject.points)
+                {
+                    var analysisPoint = vp.GetAnalysisPoint(point.Value, useRawAngles);
+                    analysisPoints.Add(point.Key, analysisPoint);
+                }
+
+                var edges = new Dictionary<long, List<AnalysisPoint>>();
+                var edgeMaterial = Settings.Materials[Settings.MaterialPalette.BuildingEdges];
+
+                foreach (var lineMapping in analysisObject.lines)
+                {
+                    var edgePoints = new List<AnalysisPoint>();
+
+                    foreach (var coordinateId in lineMapping.Value)
+                    {
+                        analysisPoints.TryGetValue(coordinateId, out var analysisPoint);
+                        edgePoints.Add(analysisPoint);
+                    }
+
+                    edges.Add(lineMapping.Key, edgePoints);
+                }
+
+                foreach (var surface in analysisObject.surfaces)
+                {
+                    var srfAPs = new List<AnalysisPoint>();
+
+                    foreach (var edge in surface)
+                    {
+                        var isLeftToRight = edge.Vertex.Id == edge.Edge.Left.Vertex.Id;
+
+                        if (edges.TryGetValue(edge.Edge.Id, out var points))
+                        {
+                            var edgePoints = isLeftToRight ? points.SkipLast(1) : points.AsEnumerable().Reverse().SkipLast(1);
+                            var coordinates = edgePoints.Select(analysisPoint => analysisPoint).ToArray();
+                            srfAPs.AddRange(coordinates);
+                        }
+                    }
+
+                    try
+                    {
+                        var rawPolygon = new Polygon(srfAPs.Select(ap => ap.PlanAndSection).ToArray());
+                        if (rawPolygon.Area() > 0)
+                        {
+                            rawPolygons.Add(rawPolygon);
+
+                            if (useRawAngles)
+                            {
+                                drawPolygons.Add(rawPolygon);
+                            }
+                            else
+                            {
+                                try
+                                {
+                                    var drawPolygon = new Polygon(srfAPs.Select(ap => ap.DrawCoordinate).ToArray());
+                                    if (drawPolygon.Area() > 0)
+                                    {
+                                        drawPolygons.Add(drawPolygon);
+                                    }
+                                }
+                                catch (ArgumentException e)
+                                {
+                                    Console.WriteLine($"Failure to create projected polygon: {e.Message}");
+                                }
+                            }
+                        }
+                    }
+                    catch (ArgumentException e)
+                    {
+                        Console.WriteLine($"Failure to create raw polygon: {e.Message}");
+                    }
+                }
+
+                foreach (var edge in edges.Values)
+                {
+                    var points = edge.Select(ap => ap.DrawCoordinate).ToArray();
+                    try
+                    {
+                        var polyline = new Polyline(points);
+                        var modelCurve = new ModelCurve(polyline, edgeMaterial, transform);
+                        model.AddElement(modelCurve);
+                    }
+                    catch (ArgumentException e)
+                    {
+                        Console.WriteLine($"Failure to draw curve: {e.Message}");
+                        foreach (var point in points)
+                        {
+                            Console.WriteLine($"-- {point.X}, {point.Y}, {point.Z}");
+                        }
+                    }
+
+                }
             }
 
-            foreach (var rawProfileCurve in this.ProfileCurves)
+            // Raw angle polygon(s), from which we will run our calculations
+            this.RawSilhouettes = new List<Polygon>(Polygon.UnionAll(rawPolygons));
+
+            if (useRawAngles)
             {
-                var coordinates = rawProfileCurve.Vertices.Select(pt => this.vp.GetAnalysisPoint(pt.X, pt.Y, useRawAngles).DrawCoordinate).ToArray();
-                var polyline = new Polyline(coordinates);
-                var profileCurve = new ModelCurve(polyline, profileCurveMaterial, transform);
-                model.AddElement(profileCurve);
+                this.DrawSilhouettes = this.RawSilhouettes;
+            }
+            else
+            {
+                this.DrawSilhouettes = new List<Polygon>(Polygon.UnionAll(drawPolygons));
+            }
+
+
+            foreach (var silhouette in this.DrawSilhouettes)
+            {
+                var panel = new Panel(silhouette, Settings.Materials[Settings.MaterialPalette.Silhouette], transform);
+                model.AddElement(panel);
             }
         }
     }
