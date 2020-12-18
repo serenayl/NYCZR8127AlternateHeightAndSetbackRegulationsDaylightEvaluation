@@ -102,7 +102,5 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             envelopes.AddRange(model.AllElementsOfType<Envelope>());
             return envelopes;
         }
-
-
     }
 }

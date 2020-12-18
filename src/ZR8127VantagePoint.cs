@@ -19,6 +19,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
     }
     public class VantagePoint
     {
+        public VantageStreets VantageStreet;
         public Vector3 Point;
         public Vector3 StartDirection;
         public Vector3 FrontDirection;
@@ -42,6 +43,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         private static double longCenterlineLength = VantageDistance * 2;
 
         public VantagePoint(
+            VantageStreets vantageStreet,
             Vector3 point,
             Vector3 startDirection,
             Vector3 ninetyDegreeDirection,
@@ -49,6 +51,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             double centerlineOffsetDist = 0.0
         )
         {
+            this.VantageStreet = vantageStreet;
             this.Point = point;
             this.StartDirection = startDirection;
             this.FrontDirection = ninetyDegreeDirection;
@@ -145,6 +148,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             var dir1 = new Vector3(centerline.End - centerline.Start).Unitized();
             var origin1 = base1 + (dir1 * VantageDistance);
             var vp1 = new VantagePoint(
+                vantageStreet,
                 origin1,
                 dir1 * -1,
                 ninetyDegreeDirection,
@@ -158,6 +162,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             var dir2 = new Vector3(centerline.Start - centerline.End).Unitized();
             var origin2 = base2 + (dir2 * VantageDistance);
             var vp2 = new VantagePoint(
+                vantageStreet,
                 origin2,
                 dir2 * -1,
                 ninetyDegreeDirection,
@@ -172,6 +177,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                 var dir3 = dir1;
                 var origin3 = lineBetweenVps.PointAt(0.5);
                 var vp3 = new VantagePoint(
+                    vantageStreet,
                     origin3,
                     dir3 * -1,
                     ninetyDegreeDirection,
@@ -184,7 +190,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             calculateDaylightBoundaries(vantageStreet, vantagePoints, model);
             foreach (var vp in vantagePoints)
             {
-                vp.Diagram.calculateProfileCurves();
+                vp.Diagram.CalculateProfileCurvesAndBoundingSquares();
             }
 
             // Visualize if we are able to
