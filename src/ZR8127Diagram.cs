@@ -32,11 +32,20 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         private Grid1d basePlanGrid;
 
         public Dictionary<(double, double), Square> Squares = new Dictionary<(double, double), Square>();
+        public Dictionary<(double, double), Square> SquaresWIthProfilePenalty = new Dictionary<(double, double), Square>();
+        public Dictionary<(double, double), Square> SquaresBelowCutoff = new Dictionary<(double, double), Square>();
+        public Dictionary<(double, double), Square> SquaresAboveCutoff = new Dictionary<(double, double), Square>();
         public List<Polyline> ProfileCurves = new List<Polyline>();
         public List<Polygon> ProfilePolygons = new List<Polygon>();
         public List<Polygon> RawSilhouettes;
         public List<Polygon> DrawSilhouettes;
 
+        public double DaylightBlockage;
+        public double UnblockedDaylightCredit;
+        public double ProfilePenalty;
+        public double AvailableDaylight;
+        public double DaylightRemaining;
+        public double DaylightScore;
 
         #region PrivateUtils
         /// <summary>
@@ -344,12 +353,26 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                             var square = new Square(planGrid, sectionGrid, this.vp);
                             this.Squares[square.Id] = square;
 
+                            if (square.PotentialProfilePenalty != 0)
+                            {
+                                this.SquaresWIthProfilePenalty[square.Id] = square;
+                            }
+
+                            if (square.SectionGrid.Grid.Domain.Min >= Settings.SectionCutoffLine)
+                            {
+                                this.SquaresAboveCutoff[square.Id] = square;
+                            }
+                            else
+                            {
+                                this.SquaresBelowCutoff[square.Id] = square;
+                            }
+
                             foreach (var subPlanGrid in planGrid.Children)
                             {
                                 foreach (var subSectGrid1d in sectGrid1d.Cells)
                                 {
                                     var subSectionGrid = new SectionGrid(subSectGrid1d.Domain.Min, subSectGrid1d);
-                                    var subSquare = new Square(subPlanGrid, subSectionGrid, this.vp);
+                                    var subSquare = new Square(square, subPlanGrid, subSectionGrid, this.vp);
                                     square.SubSquares.Add(subSquare);
                                 }
                             }
@@ -541,20 +564,46 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             this.drawGrid(model, transform, useRawAngles);
             this.drawAndCalculateSilhouettes(model, analysisObjects, transform, useRawAngles);
 
-            var daylightBlockage = this.calculateDaylightBlockage(model, transform, useRawAngles);
-            var unblockedDaylightCredit = this.calculateUnblockedDaylight(model, transform, useRawAngles);
+            this.DaylightBlockage = this.calculateDaylightBlockage(out var blockedDaylightSubsquares);
+            this.UnblockedDaylightCredit = this.calculateUnblockedDaylight(out var unblockedSubsquares);
+            this.ProfilePenalty = this.calculateProfilePenalty(out var penaltySubsquares);
+            this.AvailableDaylight = this.SquaresAboveCutoff.Values.Aggregate(0.0, (sum, square) => sum + square.PlanGrid.Multiplier);
+            this.DaylightRemaining = this.DaylightBlockage + this.UnblockedDaylightCredit + this.ProfilePenalty + this.AvailableDaylight;
+            this.DaylightScore = this.DaylightRemaining / this.AvailableDaylight * 100;
+
+            this.drawSquares(blockedDaylightSubsquares, model, Diagram.daylightBlockageMaterial, transform, useRawAngles);
+            this.drawSquares(unblockedSubsquares, model, Diagram.unblockedCreditMaterial, transform, useRawAngles);
+            this.drawSquares(penaltySubsquares, model, Diagram.profileEncroachmentMaterial, transform, useRawAngles);
 
             Console.WriteLine("--- ANALYSIS ---");
-            Console.WriteLine($"- Daylight Blockage: {daylightBlockage}");
-            Console.WriteLine($"- Unblocked Daylight Credit: {unblockedDaylightCredit}");
+            Console.WriteLine($"- Daylight Blockage: {this.DaylightBlockage}");
+            Console.WriteLine($"- Unblocked Daylight Credit: {this.UnblockedDaylightCredit}");
+            Console.WriteLine($"- Profile Penalty: {this.ProfilePenalty}");
+            Console.WriteLine($"- Available daylight: {this.AvailableDaylight}");
+            Console.WriteLine($"- Remaining daylight: {this.DaylightRemaining}");
+            Console.WriteLine($"- Daylight score: {this.DaylightScore}");
         }
 
-        private double calculateDaylightBlockage(Model model = null, Transform transform = null, Boolean useRawAngles = false)
+        private void drawSquares(List<Square> subSqures, Model model, Material material, Transform transform = null, Boolean useRawAngles = false)
         {
+            foreach (var subSquare in subSqures)
+            {
+                var coordinates = subSquare.Polygon.Vertices.Select(pt => this.vp.GetAnalysisPoint(pt.X, pt.Y, useRawAngles).DrawCoordinate).ToArray();
+                var polygon = new Polygon(coordinates);
+                var panel = new Panel(polygon, material: material, transform: transform);
+                model.AddElement(panel);
+            }
+        }
+
+        private double calculateDaylightBlockage(out List<Square> subSquares)
+        {
+            subSquares = new List<Square>();
+
             var daylightBlockage = 0.0;
+
             foreach (var rawSilhouette in this.RawSilhouettes)
             {
-                foreach (var square in this.Squares.Values)
+                foreach (var square in this.SquaresAboveCutoff.Values)
                 {
                     if (square.SectionGrid.Grid.Domain.Min < Settings.SectionCutoffLine)
                     {
@@ -582,13 +631,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
 
                         daylightBlockage += subSquare.PotentialScore;
 
-                        if (model != null)
-                        {
-                            var coordinates = subSquare.Polygon.Vertices.Select(pt => this.vp.GetAnalysisPoint(pt.X, pt.Y, useRawAngles).DrawCoordinate).ToArray();
-                            var polygon = new Polygon(coordinates);
-                            var panel = new Panel(polygon, material: daylightBlockageMaterial, transform: transform);
-                            model.AddElement(panel);
-                        }
+                        subSquares.Add(subSquare);
                     }
                 }
             }
@@ -596,8 +639,10 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             return daylightBlockage;
         }
 
-        private double calculateUnblockedDaylight(Model model = null, Transform transform = null, Boolean useRawAngles = false)
+        private double calculateUnblockedDaylight(out List<Square> subSquares)
         {
+            subSquares = new List<Square>();
+
             if (this.vp.VantageStreet.StreetWallContinuity)
             {
                 return 0.0;
@@ -606,7 +651,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
 
             foreach (var rawSilhouette in this.RawSilhouettes)
             {
-                foreach (var square in this.Squares.Values)
+                foreach (var square in this.SquaresBelowCutoff.Values)
                 {
                     if (square.PotentialScore <= 0.0)
                     {
@@ -632,20 +677,67 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                             continue;
                         }
 
-                        credit += subSquare.PotentialScore;
+                        subSquares.Add(subSquare);
 
-                        if (model != null)
-                        {
-                            var coordinates = subSquare.Polygon.Vertices.Select(pt => this.vp.GetAnalysisPoint(pt.X, pt.Y, useRawAngles).DrawCoordinate).ToArray();
-                            var polygon = new Polygon(coordinates);
-                            var panel = new Panel(polygon, material: unblockedCreditMaterial, transform: transform);
-                            model.AddElement(panel);
-                        }
+                        credit += subSquare.PotentialScore;
                     }
                 }
             }
 
             return credit;
+        }
+
+        private double calculateProfilePenalty(out List<Square> subSquares)
+        {
+            subSquares = new List<Square>();
+
+            var penalty = 0.0;
+
+            foreach (var rawSilhouette in this.RawSilhouettes)
+            {
+                foreach (var profilePolygon in this.ProfilePolygons)
+                {
+                    var penaltyAreas = rawSilhouette.Intersection(profilePolygon);
+
+                    Console.WriteLine($"Intersections: {penaltyAreas.Count}");
+
+                    foreach (var penaltyArea in penaltyAreas)
+                    {
+                        foreach (var square in this.SquaresWIthProfilePenalty.Values)
+                        {
+                            var intersects = square.Polygon.Intersects(penaltyArea);
+
+                            if (!intersects)
+                            {
+                                // square does not touch this piece of building that lies beyond profile curve
+                                continue;
+                            }
+
+                            var contains = penaltyArea.Contains(square.Polygon);
+
+                            if (contains)
+                            {
+                                // whole square is penalized
+                                subSquares = subSquares.Concat(square.SubSquares).ToList();
+                                penalty += square.PotentialProfilePenalty;
+                                continue;
+                            }
+
+                            // if we did not totally contain, count up subsquares
+                            foreach (var subSquare in square.SubSquares)
+                            {
+                                if (subSquare.Polygon.Intersects(penaltyArea))
+                                {
+                                    subSquares.Add(subSquare);
+                                    penalty += subSquare.PotentialProfilePenalty;
+                                }
+                            }
+
+                        }
+                    }
+                }
+            }
+            return penalty;
         }
 
         private static Boolean domainsOverlap(Domain1d domain1, Domain1d domain2)

@@ -77,7 +77,7 @@
         "type": "boolean",
         "default": false,
         "$hyparOrder": 2,
-        "description": "Skip the portion of the code that subdivides your non-vertical edges into the 10' segments as specified by the code. Use this if your analysis is taking too long or timing out. Results will be less visually accurate and possibly numerically accurate, but should give you a reasonable estimate of results."
+        "description": "Skip the portion of the code that subdivides your non-vertical edges into the 10' segments as specified by the code. Use this if your analysis is taking too long or timing out. Results will be less visually accurate and possibly less numerically accurate, but should give you a reasonable estimate of results."
       },
       "Debug Visualization": {
         "type": "boolean",

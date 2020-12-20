@@ -57,7 +57,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         [Newtonsoft.Json.JsonProperty("Qualify for East Midtown Subdistrict", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public bool QualifyForEastMidtownSubdistrict { get; set; }
     
-        /// <summary>Skip the portion of the code that subdivides your non-vertical edges into the 10' segments as specified by the code. Use this if your analysis is taking too long or timing out. Results will be less visually accurate and possibly numerically accurate, but should give you a reasonable estimate of results.</summary>
+        /// <summary>Skip the portion of the code that subdivides your non-vertical edges into the 10' segments as specified by the code. Use this if your analysis is taking too long or timing out. Results will be less visually accurate and possibly less numerically accurate, but should give you a reasonable estimate of results.</summary>
         [Newtonsoft.Json.JsonProperty("Skip Subdivide", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public bool SkipSubdivide { get; set; } = false;
     

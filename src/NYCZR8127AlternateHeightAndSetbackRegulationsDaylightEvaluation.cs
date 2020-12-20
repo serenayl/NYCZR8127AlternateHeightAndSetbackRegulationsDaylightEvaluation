@@ -72,7 +72,18 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                     vp.Diagram.Draw(model, analysisObjects, transform, input.DebugVisualization);
                     vpIndex += 1;
                 }
+
+                var vantageStreetScore = vantagePoints.Aggregate(0.0, (sum, vp) => sum + vp.Diagram.DaylightScore) / vantagePoints.Count;
+
+                Console.WriteLine($"VANTAGE STREET SCORE: {vantageStreetScore}");
+
+                if (vantageStreetScore < 66.0)
+                {
+                    // This is a failure
+                }
             }
+
+            // TODO: sum up all vantage streets and normalize by street length. This must be more than 75.
 
             output.Model = model;
 

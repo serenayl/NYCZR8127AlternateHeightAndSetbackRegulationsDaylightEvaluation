@@ -43,7 +43,6 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         }
     }
 
-
     public class Square
     {
         // ID is plan id, sectionid.
@@ -70,27 +69,35 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
 
             this.Polygon = Polygon.Rectangle(new Vector3(this.PlanGrid.Grid.Domain.Min, this.SectionGrid.Grid.Domain.Min), new Vector3(this.PlanGrid.Grid.Domain.Max, this.SectionGrid.Grid.Domain.Max));
 
-            var isSubsquare = this.PlanGrid.Id % 1.0 != 0.0;
+            var isParentSquare = this.PlanGrid.Id % 1.0 == 0.0;
 
             var encroachmentKey = ((int)Math.Floor(this.PlanGrid.Id), (int)Math.Floor(this.SectionGrid.Id));
 
-            if (Settings.ProfileEncroachments.ContainsKey(encroachmentKey))
+            if (isParentSquare && Settings.ProfileEncroachments.ContainsKey(encroachmentKey))
             {
-                this.PotentialProfilePenalty = -1 * (!isSubsquare ? Settings.ProfileEncroachments[encroachmentKey] : Settings.ProfileEncroachments[encroachmentKey] / 10.0);
+                this.PotentialProfilePenalty = -1 * Settings.ProfileEncroachments[encroachmentKey];
             }
 
             if (
                 !vp.VantageStreet.StreetWallContinuity &&
                 this.PlanGrid.Grid.Domain.Max <= Settings.SectionCutoffLine &&
-                this.PlanGrid.Multiplier == (isSubsquare ? 0.2 : 1.0) // code is unclear on this, but to be safe we do not count unblocked squares for credit that are cut off by daylight boundaries
+                this.PlanGrid.Multiplier == (isParentSquare ? 1.0 : 0.2) // code is unclear on this, but to be safe we do not count unblocked squares for credit that are cut off by daylight boundaries
             )
             {
-                this.PotentialScore = isSubsquare ? 0.03 : 0.3;
+                this.PotentialScore = isParentSquare ? 0.3 : 0.03;
             }
 
             if (this.SectionGrid.Id >= Settings.SectionCutoffLine)
             {
-                this.PotentialScore = -1 * (isSubsquare ? 0.1 : 1.0);
+                this.PotentialScore = -1 * (isParentSquare ? 1.0 : 0.1);
+            }
+        }
+
+        public Square(Square parentSquare, PlanGrid planGrid, SectionGrid sectionGrid, VantagePoint vp) : this(planGrid, sectionGrid, vp)
+        {
+            if (parentSquare.PotentialProfilePenalty != 0)
+            {
+                this.PotentialProfilePenalty = parentSquare.PotentialProfilePenalty / 10;
             }
         }
     }
