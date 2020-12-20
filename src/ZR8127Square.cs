@@ -76,7 +76,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
 
             if (Settings.ProfileEncroachments.ContainsKey(encroachmentKey))
             {
-                this.PotentialProfilePenalty = !isSubsquare ? Settings.ProfileEncroachments[encroachmentKey] : Settings.ProfileEncroachments[encroachmentKey] / 10.0;
+                this.PotentialProfilePenalty = -1 * (!isSubsquare ? Settings.ProfileEncroachments[encroachmentKey] : Settings.ProfileEncroachments[encroachmentKey] / 10.0);
             }
 
             if (
@@ -90,7 +90,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
 
             if (this.SectionGrid.Id >= Settings.SectionCutoffLine)
             {
-                this.PotentialScore = isSubsquare ? 0.1 : 1.0;
+                this.PotentialScore = -1 * (isSubsquare ? 0.1 : 1.0);
             }
         }
     }

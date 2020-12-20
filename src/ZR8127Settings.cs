@@ -16,6 +16,8 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             DaylightBoundaries = 13,
             ProfileCurves = 14,
             BlockedDaylight = 20,
+            ProfileEncroachment = 21,
+            UnblockedCredit = 22,
         }
         public static Dictionary<MaterialPalette, Material> Materials => new Dictionary<MaterialPalette, Material> {
             {
@@ -53,6 +55,14 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             {
                 MaterialPalette.BlockedDaylight,
                 new Material( "blocked daylight", new Color(1,0,0,0.3))
+            },
+            {
+                MaterialPalette.ProfileEncroachment,
+                new Material( "profile encroachment", Colors.Red)
+            },
+            {
+                MaterialPalette.UnblockedCredit,
+                new Material( "unblocked credit", new Color(0,1,0,0.3))
             }
         };
 

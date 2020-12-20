@@ -22,6 +22,8 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         private static Material daylightBoundariesMaterial = Settings.Materials[Settings.MaterialPalette.DaylightBoundaries];
         private static Material profileCurveMaterial = Settings.Materials[Settings.MaterialPalette.ProfileCurves];
         private static Material daylightBlockageMaterial = Settings.Materials[Settings.MaterialPalette.BlockedDaylight];
+        private static Material profileEncroachmentMaterial = Settings.Materials[Settings.MaterialPalette.ProfileEncroachment];
+        private static Material unblockedCreditMaterial = Settings.Materials[Settings.MaterialPalette.UnblockedCredit];
 
         private static Grid1d sectionGrid1d = makeSectionGrid();
         #endregion PrivateStatics
@@ -574,7 +576,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
 
                         if (!subIntersects)
                         {
-                            // Subsquare cdoesn't count
+                            // Subsquare doesn't count
                             continue;
                         }
 
@@ -600,7 +602,50 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             {
                 return 0.0;
             }
-            return 0.0;
+            var credit = 0.0;
+
+            foreach (var rawSilhouette in this.RawSilhouettes)
+            {
+                foreach (var square in this.Squares.Values)
+                {
+                    if (square.PotentialScore <= 0.0)
+                    {
+                        // Not applicable to daylight credit
+                        continue;
+                    }
+
+                    var contains = rawSilhouette.Contains(square.Polygon);
+
+                    if (contains)
+                    {
+                        // No credit
+                        continue;
+                    }
+
+                    foreach (var subSquare in square.SubSquares)
+                    {
+                        var subIntersects = subSquare.Polygon.Intersects(rawSilhouette);
+
+                        if (subIntersects)
+                        {
+                            // No credit
+                            continue;
+                        }
+
+                        credit += subSquare.PotentialScore;
+
+                        if (model != null)
+                        {
+                            var coordinates = subSquare.Polygon.Vertices.Select(pt => this.vp.GetAnalysisPoint(pt.X, pt.Y, useRawAngles).DrawCoordinate).ToArray();
+                            var polygon = new Polygon(coordinates);
+                            var panel = new Panel(polygon, material: unblockedCreditMaterial, transform: transform);
+                            model.AddElement(panel);
+                        }
+                    }
+                }
+            }
+
+            return credit;
         }
 
         private static Boolean domainsOverlap(Domain1d domain1, Domain1d domain2)
