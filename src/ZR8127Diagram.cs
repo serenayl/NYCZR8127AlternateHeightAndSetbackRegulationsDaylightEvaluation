@@ -7,52 +7,34 @@ using System.Linq;
 
 namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
 {
-    public class PlanSquare
-    {
-        public Grid1d PlanGrid;
-        // Plan id is the id number as referenced in the code: 1st cell is furthest from 90 degree line.
-        // A full chart will have two of each plan ID, 1-10, and then 10-1 on the other side of the 90 degree line.
-        public double PlanId;
-        public double Multiplier = 0.0;
-        public List<PlanSquare> SubPlanSquares = new List<PlanSquare>();
-
-        public PlanSquare(Grid1d planGrid, double planId)
-        {
-            this.PlanGrid = planGrid;
-            this.PlanId = planId;
-        }
-    }
-
     public class Diagram
     {
         #region PrivateStatics
-        /// <summary>Height of the resulting projected chart</summary>
-        private static double intersectionAt90Deg = 140.0;
 
         /// <summary>Projection without a factor applied at the 90 degree section line</summary>
         private static double rawProjectionAt90Deg = MapCoordinate(0.0, 90.0).Y;
 
         /// <summary>Calculated projection factor for section lines</summary>
-        private static double projectionFactor = intersectionAt90Deg / rawProjectionAt90Deg;
+        private static double projectionFactor = Settings.ChartHeight / rawProjectionAt90Deg;
 
         private static Material majorLinesMaterial = Settings.Materials[Settings.MaterialPalette.GridlinesMajor];
         private static Material minorLinesMaterial = Settings.Materials[Settings.MaterialPalette.GridlinesMinor];
         private static Material daylightBoundariesMaterial = Settings.Materials[Settings.MaterialPalette.DaylightBoundaries];
         private static Material profileCurveMaterial = Settings.Materials[Settings.MaterialPalette.ProfileCurves];
+        private static Material daylightBlockageMaterial = Settings.Materials[Settings.MaterialPalette.BlockedDaylight];
+
+        private static Grid1d sectionGrid1d = makeSectionGrid();
         #endregion PrivateStatics
 
-        public Grid1d SectionGrid = makeSectionGrid();
-        public Grid1d BasePlanGrid;
+        private VantagePoint vp;
+        private Grid1d basePlanGrid;
 
-        // Format: List of dictionaries. Each index of list is one vertical plan square strip.
-        // Dictionary is indexed to the square's bottom section angle.
-        public List<PlanSquare> PlanSquares;
+        public Dictionary<(double, double), Square> Squares = new Dictionary<(double, double), Square>();
         public List<Polyline> ProfileCurves = new List<Polyline>();
         public List<Polygon> ProfilePolygons = new List<Polygon>();
         public List<Polygon> RawSilhouettes;
         public List<Polygon> DrawSilhouettes;
 
-        private VantagePoint vp;
 
         #region PrivateUtils
         /// <summary>
@@ -71,7 +53,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             var sectionDomain = new Domain1d(0, 90);
             var sectionGrid = new Grid1d(sectionDomain);
 
-            sectionGrid.SplitAtPosition(70);
+            sectionGrid.SplitAtPosition(Settings.SectionCutoffLine);
 
             var curSectionAngle = 10;
 
@@ -103,7 +85,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         /// and subcells for minor plan angles
         /// </summary>
         /// <returns></returns>
-        private Grid1d makePlanGrid()
+        private Grid1d makePlanGrid(double centerlineOffsetDist)
         {
             // Generate list of major and minor raw plan angles
             var majorPlanAngles = new List<double>();
@@ -113,7 +95,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             {
                 var isMajor = i % 5 == 0;
                 var d = Units.FeetToMeters(dFt);
-                var planAngle = VantagePoint.GetPlanAngle(vp.CenterlineOffsetDist, d);
+                var planAngle = VantagePoint.GetPlanAngle(centerlineOffsetDist, d);
                 if (isMajor)
                 {
                     majorPlanAngles.Add(planAngle);
@@ -178,9 +160,9 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         private void drawGrid(Model model, Transform transform = null, Boolean useRawAngles = false)
         {
             // Draw horizontal lines
-            foreach (var aboveBelow70 in this.SectionGrid.Cells)
+            foreach (var aboveBelow in Diagram.sectionGrid1d.Cells)
             {
-                foreach (var cell in aboveBelow70.Cells)
+                foreach (var cell in aboveBelow.Cells)
                 {
                     this.drawSectionGridline(model, cell.Domain.Min, majorLinesMaterial, transform, useRawAngles);
 
@@ -205,7 +187,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             // Left edge of chart
             this.drawPlanGridline(model, -90.0, majorLinesMaterial, yTop, transform);
 
-            foreach (var cell in this.BasePlanGrid.Cells)
+            foreach (var cell in this.basePlanGrid.Cells)
             {
                 this.drawPlanGridline(model, cell.Domain.Min, majorLinesMaterial, yTop, transform);
 
@@ -218,7 +200,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                 }
             }
             // Last major plan gridline
-            this.drawPlanGridline(model, this.BasePlanGrid.Cells.Last().Domain.Max, majorLinesMaterial, yTop, transform);
+            this.drawPlanGridline(model, this.basePlanGrid.Cells.Last().Domain.Max, majorLinesMaterial, yTop, transform);
             // Right edge of chart
             this.drawPlanGridline(model, 90.0, majorLinesMaterial, yTop, transform);
 
@@ -248,7 +230,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             // }
         }
 
-        private void caculateProfileCurves()
+        private void makeProfileCurves()
         {
             this.ProfileCurves = new List<Polyline>();
             this.ProfilePolygons = new List<Polygon>();
@@ -294,6 +276,94 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                     var profilePolygon = new Polygon(polylinePoints);
                     this.ProfilePolygons.Add(profilePolygon);
 
+                }
+            }
+        }
+
+        private void makeSquares()
+        {
+            // this.PlanSquares = new List<PlanSquare>();
+            var planId = 1.0;
+            var planIdx = 0;
+
+            foreach (var baseCell in this.basePlanGrid.Cells)
+            {
+                if (domainsOverlap(baseCell.Domain, this.vp.DaylightBoundaries))
+                {
+                    var isFullyInDomain = baseCell.Domain.Max <= this.vp.DaylightBoundaries.Max && baseCell.Domain.Min >= this.vp.DaylightBoundaries.Min;
+
+                    var planGrid1d = new Grid1d(
+                        new Domain1d(
+                            Math.Max(baseCell.Domain.Min, this.vp.DaylightBoundaries.Min),
+                            Math.Min(baseCell.Domain.Max, this.vp.DaylightBoundaries.Max)
+                        )
+                    );
+
+                    var planGrid = new PlanGrid(planId, planGrid1d);
+
+                    // Set full and partial subcells, splitting and cullingat daylight boundaries
+                    var subPlanCellId = 1.0;
+
+                    foreach (var baseSubCell in baseCell.Cells)
+                    {
+                        if (domainsOverlap(baseSubCell.Domain, this.vp.DaylightBoundaries))
+                        {
+                            var subIsFullyInDomain = baseCell.Domain.Max <= this.vp.DaylightBoundaries.Max && baseCell.Domain.Min >= this.vp.DaylightBoundaries.Min;
+
+                            var subPlanGrid1d = new Grid1d(
+                                new Domain1d(
+                                    Math.Max(baseSubCell.Domain.Min, this.vp.DaylightBoundaries.Min),
+                                    Math.Min(baseSubCell.Domain.Max, this.vp.DaylightBoundaries.Max)
+                                )
+                            );
+
+                            var subPlanMultiplier =
+                                subIsFullyInDomain ?
+                                1.0 / 5 :
+                                ((subPlanGrid1d.Domain.Max - subPlanGrid1d.Domain.Min) / (baseSubCell.Domain.Max - baseSubCell.Domain.Min)) / 5;
+
+                            var subPlanId = planId + subPlanCellId / 10;
+
+                            var subPlanGrid = new PlanGrid(subPlanId, subPlanGrid1d, subPlanMultiplier);
+
+                            planGrid.Multiplier += subPlanMultiplier;
+
+                            planGrid.Children.Add(subPlanGrid);
+                        }
+
+                        subPlanCellId += 1;
+                    }
+
+                    foreach (var sectGridGroup in Diagram.sectionGrid1d.Cells)
+                    {
+                        foreach (var sectGrid1d in sectGridGroup.Cells)
+                        {
+                            var sectionGrid = new SectionGrid(sectGrid1d.Domain.Min, sectGrid1d);
+                            var square = new Square(planGrid, sectionGrid, this.vp);
+                            this.Squares[square.Id] = square;
+
+                            foreach (var subPlanGrid in planGrid.Children)
+                            {
+                                foreach (var subSectGrid1d in sectGrid1d.Cells)
+                                {
+                                    var subSectionGrid = new SectionGrid(subSectGrid1d.Domain.Min, subSectGrid1d);
+                                    var subSquare = new Square(subPlanGrid, subSectionGrid, this.vp);
+                                    square.SubSquares.Add(subSquare);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                planIdx++;
+
+                if (planIdx < 10)
+                {
+                    planId++;
+                }
+                else if (planIdx > 10)
+                {
+                    planId--;
                 }
             }
         }
@@ -446,7 +516,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         public Diagram(VantagePoint vp)
         {
             this.vp = vp;
-            this.BasePlanGrid = this.makePlanGrid();
+            this.basePlanGrid = this.makePlanGrid(vp.CenterlineOffsetDist);
         }
 
         /// <summary>
@@ -457,74 +527,8 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         /// </summary>
         public void CalculateProfileCurvesAndBoundingSquares()
         {
-            this.caculateProfileCurves();
-
-            // Bounding squares
-            this.PlanSquares = new List<PlanSquare>();
-            var planId = 1.0;
-            var planIdx = 0;
-
-            foreach (var baseCell in this.BasePlanGrid.Cells)
-            {
-                if (domainsOverlap(baseCell.Domain, this.vp.DaylightBoundaries))
-                {
-                    var isFullyInDomain = baseCell.Domain.Max <= this.vp.DaylightBoundaries.Max && baseCell.Domain.Min >= this.vp.DaylightBoundaries.Min;
-
-                    var planGrid = new Grid1d(
-                        new Domain1d(
-                            Math.Max(baseCell.Domain.Min, this.vp.DaylightBoundaries.Min),
-                            Math.Min(baseCell.Domain.Max, this.vp.DaylightBoundaries.Max)
-                        )
-                    );
-
-                    var planSquare = new PlanSquare(planGrid, planId);
-
-                    // Loop through original subcells
-                    var j = 1.0;
-                    foreach (var baseSubCell in baseCell.Cells)
-                    {
-                        if (domainsOverlap(baseSubCell.Domain, this.vp.DaylightBoundaries))
-                        {
-                            var subPlanGrid = new Grid1d(
-                                new Domain1d(
-                                    Math.Max(baseSubCell.Domain.Min, this.vp.DaylightBoundaries.Min),
-                                    Math.Min(baseSubCell.Domain.Max, this.vp.DaylightBoundaries.Max)
-                                )
-                            );
-
-                            var subPlanSquare = new PlanSquare(subPlanGrid, planId + j / 10);
-
-                            if (baseSubCell.Domain.Max <= planSquare.PlanGrid.Domain.Max && baseSubCell.Domain.Min >= planSquare.PlanGrid.Domain.Min)
-                            {
-                                subPlanSquare.Multiplier = 1.0 / 5;
-                            }
-                            else
-                            {
-                                subPlanSquare.Multiplier = ((subPlanGrid.Domain.Max - subPlanGrid.Domain.Min) / (baseSubCell.Domain.Max - baseSubCell.Domain.Min)) / 5;
-                            }
-
-                            planSquare.Multiplier += subPlanSquare.Multiplier;
-
-                            planSquare.SubPlanSquares.Add(subPlanSquare);
-                        }
-
-                        j += 1;
-                    }
-
-                    this.PlanSquares.Add(planSquare);
-                }
-
-                planIdx++;
-
-                if (planIdx < 10)
-                {
-                    planId++;
-                }
-                else if (planIdx > 10)
-                {
-                    planId--;
-                }
-            }
+            this.makeProfileCurves();
+            this.makeSquares();
         }
 
         /// <summary>
@@ -534,10 +538,63 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         {
             this.drawGrid(model, transform, useRawAngles);
             this.drawAndCalculateSilhouettes(model, analysisObjects, transform, useRawAngles);
-            this.calculateUnblockedDaylight();
+
+            var daylightBlockage = this.calculateDaylightBlockage(model, transform, useRawAngles);
+            var unblockedDaylightCredit = this.calculateUnblockedDaylight(model, transform, useRawAngles);
+
+            Console.WriteLine("--- ANALYSIS ---");
+            Console.WriteLine($"- Daylight Blockage: {daylightBlockage}");
+            Console.WriteLine($"- Unblocked Daylight Credit: {unblockedDaylightCredit}");
         }
 
-        private double calculateUnblockedDaylight()
+        private double calculateDaylightBlockage(Model model = null, Transform transform = null, Boolean useRawAngles = false)
+        {
+            var daylightBlockage = 0.0;
+            foreach (var rawSilhouette in this.RawSilhouettes)
+            {
+                foreach (var square in this.Squares.Values)
+                {
+                    if (square.SectionGrid.Grid.Domain.Min < Settings.SectionCutoffLine)
+                    {
+                        // Not applicable to daylight blockage
+                        continue;
+                    }
+
+                    var intersects = square.Polygon.Intersects(rawSilhouette);
+
+                    if (!intersects)
+                    {
+                        // We don't care about this square
+                        continue;
+                    }
+
+                    foreach (var subSquare in square.SubSquares)
+                    {
+                        var subIntersects = subSquare.Polygon.Intersects(rawSilhouette);
+
+                        if (!subIntersects)
+                        {
+                            // Subsquare cdoesn't count
+                            continue;
+                        }
+
+                        daylightBlockage += subSquare.PotentialScore;
+
+                        if (model != null)
+                        {
+                            var coordinates = subSquare.Polygon.Vertices.Select(pt => this.vp.GetAnalysisPoint(pt.X, pt.Y, useRawAngles).DrawCoordinate).ToArray();
+                            var polygon = new Polygon(coordinates);
+                            var panel = new Panel(polygon, material: daylightBlockageMaterial, transform: transform);
+                            model.AddElement(panel);
+                        }
+                    }
+                }
+            }
+
+            return daylightBlockage;
+        }
+
+        private double calculateUnblockedDaylight(Model model = null, Transform transform = null, Boolean useRawAngles = false)
         {
             if (this.vp.VantageStreet.StreetWallContinuity)
             {

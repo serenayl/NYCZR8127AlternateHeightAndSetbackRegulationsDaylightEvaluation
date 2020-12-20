@@ -28,6 +28,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
 
             if (envelopeAndSite == null)
             {
+                Console.WriteLine("Using separate Envelope and Site dependencies");
                 inputModels.TryGetValue("Site", out var siteModel);
                 inputModels.TryGetValue("Envelope", out var envelopeModel);
 
@@ -36,6 +37,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             }
             else
             {
+                Console.WriteLine("Using combo EnvelopeAndSite");
                 siteInput = GetSite(inputModels, envelopeAndSite);
                 envelopes = GetEnvelopes(inputModels, envelopeAndSite);
             }

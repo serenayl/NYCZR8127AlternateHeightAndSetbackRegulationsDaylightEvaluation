@@ -15,6 +15,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             GridlinesIrrelevant = 12,
             DaylightBoundaries = 13,
             ProfileCurves = 14,
+            BlockedDaylight = 20,
         }
         public static Dictionary<MaterialPalette, Material> Materials => new Dictionary<MaterialPalette, Material> {
             {
@@ -48,6 +49,10 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             {
                 MaterialPalette.ProfileCurves,
                 new Material( "profile curve", Colors.Red)
+            },
+            {
+                MaterialPalette.BlockedDaylight,
+                new Material( "blocked daylight", new Color(1,0,0,0.3))
             }
         };
 
@@ -75,5 +80,9 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             { (1, 74), 1.5 }, { (2, 74), 1.0 }, { (3, 74), 0.5 }, { (4, 74), 0.5 },
             { (1, 72), 0.5 }, { (2, 72), 0.5 }, { (3, 72), 0.5 }
         };
+
+        public static int SectionCutoffLine = 70;
+
+        public static double ChartHeight = 140.0;
     }
 }
