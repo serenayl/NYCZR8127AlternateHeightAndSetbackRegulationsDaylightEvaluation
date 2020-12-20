@@ -13,20 +13,13 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         // Plan id is the id number as referenced in the code: 1st cell is furthest from 90 degree line.
         // A full chart will have two of each plan ID, 1-10, and then 10-1 on the other side of the 90 degree line.
         public double PlanId;
-        public double Multiplier;
+        public double Multiplier = 0.0;
         public List<PlanSquare> SubPlanSquares = new List<PlanSquare>();
 
         public PlanSquare(Grid1d planGrid, double planId)
         {
             this.PlanGrid = planGrid;
             this.PlanId = planId;
-        }
-
-        public PlanSquare(Grid1d planGrid, double planId, double multiplier)
-        {
-            this.PlanGrid = planGrid;
-            this.PlanId = planId;
-            this.Multiplier = multiplier;
         }
     }
 
@@ -53,8 +46,9 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
 
         // Format: List of dictionaries. Each index of list is one vertical plan square strip.
         // Dictionary is indexed to the square's bottom section angle.
-        public List<PlanSquare> Squares;
+        public List<PlanSquare> PlanSquares;
         public List<Polyline> ProfileCurves = new List<Polyline>();
+        public List<Polygon> ProfilePolygons = new List<Polygon>();
         public List<Polygon> RawSilhouettes;
         public List<Polygon> DrawSilhouettes;
 
@@ -103,6 +97,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
 
             return sectionGrid;
         }
+
         /// <summary>
         /// Make a Grid1D with cells representing major plan angles
         /// and subcells for minor plan angles
@@ -242,6 +237,64 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                 var polyline = new Polyline(coordinates);
                 var profileCurve = new ModelCurve(polyline, profileCurveMaterial, transform);
                 model.AddElement(profileCurve);
+            }
+
+            // foreach (var rawProfilePolygon in this.ProfilePolygons)
+            // {
+            //     var coordinates = rawProfilePolygon.Vertices.Select(pt => this.vp.GetAnalysisPoint(pt.X, pt.Y, useRawAngles).DrawCoordinate).ToArray();
+            //     var polygon = new Polygon(coordinates);
+            //     var profilePolygon = new ModelCurve(polygon, profileCurveMaterial, transform);
+            //     model.AddElement(profilePolygon);
+            // }
+        }
+
+        private void caculateProfileCurves()
+        {
+            this.ProfileCurves = new List<Polyline>();
+            this.ProfilePolygons = new List<Polygon>();
+
+            // Profile curve begins at 72 degree section and intersection of the far lot line and front lot line
+            // For every 5' away from the front lot line, the section angle increases by 1 degree
+            // This is a list of the relevant plan and section angles, one for negative and one for positive side of graph
+            var planSectionSets = new List<List<Vector3>>() { new List<Vector3>(), new List<Vector3>() };
+
+            for (var distFromFarLot = 0.0; distFromFarLot <= 90; distFromFarLot++)
+            {
+                var sectionAngle = distFromFarLot / 5 + 72;
+                var s = this.vp.CenterlineOffsetDist + Units.FeetToMeters(distFromFarLot);
+                var planAngle = VantagePoint.GetPlanAngle(s, VantagePoint.VantageDistance);
+
+                planSectionSets[0].Add(new Vector3(-planAngle, sectionAngle));
+                planSectionSets[1].Add(new Vector3(planAngle, sectionAngle));
+            }
+
+            planSectionSets[1].Reverse();
+
+            for (var i = 0; i < planSectionSets.Count; i++)
+            {
+                var planSectionSet = planSectionSets[i];
+                var profileDomain = new Domain1d(planSectionSet[0].X, planSectionSet.Last().X);
+
+                if (domainsOverlap(profileDomain, this.vp.DaylightBoundaries))
+                {
+                    // overlap
+                    var profileCurve = new Polyline(planSectionSet);
+                    this.ProfileCurves.Add(profileCurve);
+
+                    var polylinePoints = new List<Vector3>(planSectionSet);
+                    if (i == 0)
+                    {
+                        polylinePoints.Add(new Vector3(this.vp.DaylightBoundaries.Min, 90));
+                    }
+                    else
+                    {
+                        polylinePoints.Add(new Vector3(this.vp.DaylightBoundaries.Max, 90));
+
+                    }
+                    var profilePolygon = new Polygon(polylinePoints);
+                    this.ProfilePolygons.Add(profilePolygon);
+
+                }
             }
         }
 
@@ -404,86 +457,61 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         /// </summary>
         public void CalculateProfileCurvesAndBoundingSquares()
         {
-            var profileCurves = new List<Polyline>();
-
-            // Profile curve begins at 72 degree section and intersection of the far lot line and front lot line
-            // For every 5' away from the front lot line, the section angle increases by 1 degree
-            var planSectionSets = new List<List<Vector3>>() { new List<Vector3>(), new List<Vector3>() };
-
-            for (var distFromFarLot = 0.0; distFromFarLot <= 90; distFromFarLot++)
-            {
-                var sectionAngle = distFromFarLot / 5 + 72;
-                var s = this.vp.CenterlineOffsetDist + Units.FeetToMeters(distFromFarLot);
-                var planAngle = VantagePoint.GetPlanAngle(s, VantagePoint.VantageDistance);
-
-                planSectionSets[0].Add(new Vector3(-planAngle, sectionAngle));
-                planSectionSets[1].Add(new Vector3(planAngle, sectionAngle));
-            }
-
-            planSectionSets[1].Reverse();
-
-            foreach (var planSectionSet in planSectionSets)
-            {
-                var profileDomain = new Domain1d(planSectionSet[0].X, planSectionSet.Last().X);
-
-                if (domainsOverlap(profileDomain, this.vp.DaylightBoundaries))
-                {
-                    // overlap
-                    var profileCurve = new Polyline(planSectionSet);
-                    profileCurves.Add(profileCurve);
-                }
-            }
-
-            this.ProfileCurves = profileCurves;
+            this.caculateProfileCurves();
 
             // Bounding squares
-            this.Squares = new List<PlanSquare>();
+            this.PlanSquares = new List<PlanSquare>();
             var planId = 1.0;
             var planIdx = 0;
-            var relevantPlanGrid = new Grid1d(this.vp.DaylightBoundaries);
 
             foreach (var baseCell in this.BasePlanGrid.Cells)
             {
                 if (domainsOverlap(baseCell.Domain, this.vp.DaylightBoundaries))
                 {
-                    var isFullyInDomain = baseCell.Domain.Max <= this.vp.DaylightBoundaries.Max;
+                    var isFullyInDomain = baseCell.Domain.Max <= this.vp.DaylightBoundaries.Max && baseCell.Domain.Min >= this.vp.DaylightBoundaries.Min;
 
-                    var relevantCellMultiplier = 0.0;
+                    var planGrid = new Grid1d(
+                        new Domain1d(
+                            Math.Max(baseCell.Domain.Min, this.vp.DaylightBoundaries.Min),
+                            Math.Min(baseCell.Domain.Max, this.vp.DaylightBoundaries.Max)
+                        )
+                    );
 
-                    // This cell is relevant in some way
-                    if (isFullyInDomain)
-                    {
-                        // We're completely inside
-                        relevantPlanGrid.SplitAtPosition(baseCell.Domain.Max);
-                    }
-                    // Relevant major cell we just made or that is leftover,
-                    // could end up being partially or fully inside
-                    var relevantCell = relevantPlanGrid.FindCellAtPosition(baseCell.Domain.Min + 0.00000000001);
-
-                    var planSquare = new PlanSquare(relevantCell, planId);
+                    var planSquare = new PlanSquare(planGrid, planId);
 
                     // Loop through original subcells
                     var j = 1.0;
-                    foreach (var subcell in baseCell.Cells)
+                    foreach (var baseSubCell in baseCell.Cells)
                     {
-                        if (subcell.Domain.Max <= this.vp.DaylightBoundaries.Max)
+                        if (domainsOverlap(baseSubCell.Domain, this.vp.DaylightBoundaries))
                         {
-                            planSquare.PlanGrid.SplitAtPosition(subcell.Domain.Max);
+                            var subPlanGrid = new Grid1d(
+                                new Domain1d(
+                                    Math.Max(baseSubCell.Domain.Min, this.vp.DaylightBoundaries.Min),
+                                    Math.Min(baseSubCell.Domain.Max, this.vp.DaylightBoundaries.Max)
+                                )
+                            );
+
+                            var subPlanSquare = new PlanSquare(subPlanGrid, planId + j / 10);
+
+                            if (baseSubCell.Domain.Max <= planSquare.PlanGrid.Domain.Max && baseSubCell.Domain.Min >= planSquare.PlanGrid.Domain.Min)
+                            {
+                                subPlanSquare.Multiplier = 1.0 / 5;
+                            }
+                            else
+                            {
+                                subPlanSquare.Multiplier = ((subPlanGrid.Domain.Max - subPlanGrid.Domain.Min) / (baseSubCell.Domain.Max - baseSubCell.Domain.Min)) / 5;
+                            }
+
+                            planSquare.Multiplier += subPlanSquare.Multiplier;
+
+                            planSquare.SubPlanSquares.Add(subPlanSquare);
                         }
-                        var relevantSubCell = planSquare.PlanGrid.FindCellAtPosition(subcell.Domain.Min + 0.00000000001);
-                        var originalSubCell = baseCell.FindCellAtPosition(subcell.Domain.Min + 0.00000000001);
 
-                        // 0.2 if fully in domain, otherwise a proportion of that
-                        var relevantSubCellMultiplier = originalSubCell.Domain.Max < this.vp.DaylightBoundaries.Max ? 1.0 / 5 : ((relevantSubCell.Domain.Max - relevantSubCell.Domain.Min) / (originalSubCell.Domain.Max - originalSubCell.Domain.Min)) / 5;
-                        relevantCellMultiplier += relevantSubCellMultiplier;
-
-                        planSquare.SubPlanSquares.Add(new PlanSquare(relevantSubCell, planId + j / 10, relevantSubCellMultiplier));
                         j += 1;
                     }
 
-                    planSquare.Multiplier = relevantCellMultiplier;
-
-                    this.Squares.Add(planSquare);
+                    this.PlanSquares.Add(planSquare);
                 }
 
                 planIdx++;
@@ -520,7 +548,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
 
         private static Boolean domainsOverlap(Domain1d domain1, Domain1d domain2)
         {
-            return domain1.Min <= domain2.Max && domain1.Max >= domain2.Min;
+            return domain1.Min < domain2.Max && domain1.Max > domain2.Min;
         }
     }
 }
