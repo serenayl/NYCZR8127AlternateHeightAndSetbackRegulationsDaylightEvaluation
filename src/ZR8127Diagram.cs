@@ -7,6 +7,28 @@ using System.Linq;
 
 namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
 {
+    public class PlanSquare
+    {
+        public Grid1d PlanGrid;
+        // Plan id is the id number as referenced in the code: 1st cell is furthest from 90 degree line.
+        // A full chart will have two of each plan ID, 1-10, and then 10-1 on the other side of the 90 degree line.
+        public double PlanId;
+        public double Multiplier;
+        public List<PlanSquare> SubPlanSquares = new List<PlanSquare>();
+
+        public PlanSquare(Grid1d planGrid, double planId)
+        {
+            this.PlanGrid = planGrid;
+            this.PlanId = planId;
+        }
+
+        public PlanSquare(Grid1d planGrid, double planId, double multiplier)
+        {
+            this.PlanGrid = planGrid;
+            this.PlanId = planId;
+            this.Multiplier = multiplier;
+        }
+    }
 
     public class Diagram
     {
@@ -28,7 +50,10 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
 
         public Grid1d SectionGrid = makeSectionGrid();
         public Grid1d BasePlanGrid;
-        public Grid1d RelevantPlanGrid;
+
+        // Format: List of dictionaries. Each index of list is one vertical plan square strip.
+        // Dictionary is indexed to the square's bottom section angle.
+        public List<PlanSquare> Squares;
         public List<Polyline> ProfileCurves = new List<Polyline>();
         public List<Polygon> RawSilhouettes;
         public List<Polygon> DrawSilhouettes;
@@ -412,7 +437,10 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             this.ProfileCurves = profileCurves;
 
             // Bounding squares
-            this.RelevantPlanGrid = new Grid1d(this.vp.DaylightBoundaries);
+            this.Squares = new List<PlanSquare>();
+            var planId = 1.0;
+            var planIdx = 0;
+            var relevantPlanGrid = new Grid1d(this.vp.DaylightBoundaries);
 
             foreach (var baseCell in this.BasePlanGrid.Cells)
             {
@@ -426,31 +454,49 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                     if (isFullyInDomain)
                     {
                         // We're completely inside
-                        this.RelevantPlanGrid.SplitAtPosition(baseCell.Domain.Max);
+                        relevantPlanGrid.SplitAtPosition(baseCell.Domain.Max);
                     }
                     // Relevant major cell we just made or that is leftover,
                     // could end up being partially or fully inside
-                    var relevantCell = this.RelevantPlanGrid.FindCellAtPosition(baseCell.Domain.Min + 0.00000000001);
+                    var relevantCell = relevantPlanGrid.FindCellAtPosition(baseCell.Domain.Min + 0.00000000001);
+
+                    var planSquare = new PlanSquare(relevantCell, planId);
 
                     // Loop through original subcells
+                    var j = 1.0;
                     foreach (var subcell in baseCell.Cells)
                     {
                         if (subcell.Domain.Max <= this.vp.DaylightBoundaries.Max)
                         {
-                            relevantCell.SplitAtPosition(subcell.Domain.Max);
+                            planSquare.PlanGrid.SplitAtPosition(subcell.Domain.Max);
                         }
-                        var relevantSubCell = relevantCell.FindCellAtPosition(subcell.Domain.Min + 0.00000000001);
+                        var relevantSubCell = planSquare.PlanGrid.FindCellAtPosition(subcell.Domain.Min + 0.00000000001);
                         var originalSubCell = baseCell.FindCellAtPosition(subcell.Domain.Min + 0.00000000001);
 
+                        // 0.2 if fully in domain, otherwise a proportion of that
                         var relevantSubCellMultiplier = originalSubCell.Domain.Max < this.vp.DaylightBoundaries.Max ? 1.0 / 5 : ((relevantSubCell.Domain.Max - relevantSubCell.Domain.Min) / (originalSubCell.Domain.Max - originalSubCell.Domain.Min)) / 5;
                         relevantCellMultiplier += relevantSubCellMultiplier;
-                        relevantSubCell.Type = relevantSubCellMultiplier.ToString();
+
+                        planSquare.SubPlanSquares.Add(new PlanSquare(relevantSubCell, planId + j / 10, relevantSubCellMultiplier));
+                        j += 1;
                     }
 
-                    relevantCell.Type = relevantCellMultiplier.ToString();
+                    planSquare.Multiplier = relevantCellMultiplier;
+
+                    this.Squares.Add(planSquare);
+                }
+
+                planIdx++;
+
+                if (planIdx < 10)
+                {
+                    planId++;
+                }
+                else if (planIdx > 10)
+                {
+                    planId--;
                 }
             }
-
         }
 
         /// <summary>
