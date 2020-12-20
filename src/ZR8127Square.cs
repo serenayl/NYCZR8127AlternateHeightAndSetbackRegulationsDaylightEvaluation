@@ -61,7 +61,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
 
         public List<Square> SubSquares = new List<Square>();
 
-        public Square(PlanGrid planGrid, SectionGrid sectionGrid, VantagePoint vp)
+        public Square(PlanGrid planGrid, SectionGrid sectionGrid)
         {
             this.Id = (planGrid.Id, sectionGrid.Id);
             this.PlanGrid = planGrid;
@@ -79,11 +79,11 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             }
 
             if (
-                !vp.VantageStreet.StreetWallContinuity &&
                 this.PlanGrid.Grid.Domain.Max <= Settings.SectionCutoffLine &&
                 this.PlanGrid.Multiplier == (isParentSquare ? 1.0 : 0.2) // code is unclear on this, but to be safe we do not count unblocked squares for credit that are cut off by daylight boundaries
             )
             {
+                // This won't apply if street continuity is desired and we are not in east midtown subdistrict, but that will be handled by not looping over these in that case
                 this.PotentialScore = isParentSquare ? 0.3 : 0.03;
             }
 
@@ -93,7 +93,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             }
         }
 
-        public Square(Square parentSquare, PlanGrid planGrid, SectionGrid sectionGrid, VantagePoint vp) : this(planGrid, sectionGrid, vp)
+        public Square(Square parentSquare, PlanGrid planGrid, SectionGrid sectionGrid) : this(planGrid, sectionGrid)
         {
             if (parentSquare.PotentialProfilePenalty != 0)
             {

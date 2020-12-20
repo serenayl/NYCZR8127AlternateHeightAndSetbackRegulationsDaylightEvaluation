@@ -69,7 +69,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                 foreach (var vp in vantagePoints)
                 {
                     var transform = new Transform(new Vector3(90.0 + vpIndex * 200.0, Units.FeetToMeters(100) + 20.0));
-                    vp.Diagram.Draw(model, analysisObjects, transform, input.DebugVisualization);
+                    vp.Diagram.Draw(model, analysisObjects, input, transform, input.DebugVisualization);
                     vpIndex += 1;
                 }
 
@@ -83,7 +83,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                 }
             }
 
-            // TODO: sum up all vantage streets and normalize by street length. This must be more than 75.
+            // TODO: sum up all vantage streets and normalize by street length. This must be more than 75, or 66 if E Midtown
 
             output.Model = model;
 

@@ -350,7 +350,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                         foreach (var sectGrid1d in sectGridGroup.Cells)
                         {
                             var sectionGrid = new SectionGrid(sectGrid1d.Domain.Min, sectGrid1d);
-                            var square = new Square(planGrid, sectionGrid, this.vp);
+                            var square = new Square(planGrid, sectionGrid);
                             this.Squares[square.Id] = square;
 
                             if (square.PotentialProfilePenalty != 0)
@@ -372,7 +372,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                                 foreach (var subSectGrid1d in sectGrid1d.Cells)
                                 {
                                     var subSectionGrid = new SectionGrid(subSectGrid1d.Domain.Min, subSectGrid1d);
-                                    var subSquare = new Square(square, subPlanGrid, subSectionGrid, this.vp);
+                                    var subSquare = new Square(square, subPlanGrid, subSectionGrid);
                                     square.SubSquares.Add(subSquare);
                                 }
                             }
@@ -559,14 +559,20 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         /// <summary>
         /// Draw the diagram
         /// </summary>
-        public void Draw(Model model, List<SolidAnalysisObject> analysisObjects, Transform transform = null, Boolean useRawAngles = false)
+        public void Draw(
+            Model model,
+            List<SolidAnalysisObject> analysisObjects,
+             NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationInputs input,
+             Transform transform = null,
+             Boolean useRawAngles = false
+        )
         {
             this.drawGrid(model, transform, useRawAngles);
             this.drawAndCalculateSilhouettes(model, analysisObjects, transform, useRawAngles);
 
             this.DaylightBlockage = this.calculateDaylightBlockage(out var blockedDaylightSubsquares);
-            this.UnblockedDaylightCredit = this.calculateUnblockedDaylight(out var unblockedSubsquares);
-            this.ProfilePenalty = this.calculateProfilePenalty(out var penaltySubsquares);
+            this.UnblockedDaylightCredit = this.calculateUnblockedDaylight(input, out var unblockedSubsquares);
+            this.ProfilePenalty = this.calculateProfilePenalty(input, out var penaltySubsquares);
             this.AvailableDaylight = this.SquaresAboveCutoff.Values.Aggregate(0.0, (sum, square) => sum + square.PlanGrid.Multiplier);
             this.DaylightRemaining = this.DaylightBlockage + this.UnblockedDaylightCredit + this.ProfilePenalty + this.AvailableDaylight;
             this.DaylightScore = this.DaylightRemaining / this.AvailableDaylight * 100;
@@ -639,11 +645,11 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             return daylightBlockage;
         }
 
-        private double calculateUnblockedDaylight(out List<Square> subSquares)
+        private double calculateUnblockedDaylight(NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationInputs input, out List<Square> subSquares)
         {
             subSquares = new List<Square>();
 
-            if (this.vp.VantageStreet.StreetWallContinuity)
+            if (this.vp.VantageStreet.StreetWallContinuity && !input.QualifyForEastMidtownSubdistrict)
             {
                 return 0.0;
             }
@@ -687,11 +693,17 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             return credit;
         }
 
-        private double calculateProfilePenalty(out List<Square> subSquares)
+        private double calculateProfilePenalty(NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationInputs input, out List<Square> subSquares)
         {
             subSquares = new List<Square>();
 
             var penalty = 0.0;
+
+            if (input.QualifyForEastMidtownSubdistrict)
+            {
+                // Penalty curve does not apply
+                return penalty;
+            }
 
             foreach (var rawSilhouette in this.RawSilhouettes)
             {
