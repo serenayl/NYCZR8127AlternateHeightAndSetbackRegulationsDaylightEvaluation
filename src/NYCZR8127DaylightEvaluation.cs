@@ -19,8 +19,6 @@ namespace NYCZR8127DaylightEvaluation
         {
             var model = new Model();
 
-            var output = new NYCZR8127DaylightEvaluationOutputs();
-
             Site siteInput = null;
             List<Envelope> envelopes = null;
 
@@ -65,6 +63,19 @@ namespace NYCZR8127DaylightEvaluation
 
             model.AddElement(new ModelCurve(siteRect, name: "Site Bounds Used"));
 
+            var margin = 20;
+            var vsIndex = 0;
+            var verticalOffsetBase = Settings.ChartHeight + margin;
+
+            var streetScores = new List<double>();
+            var streetLengths = 0.0;
+            var streetScoresTimesLengths = 0.0;
+
+            if (input.VantageStreets.Count < 1)
+            {
+                throw new Exception("Please provide at least one vantage street");
+            }
+
             foreach (var vantageStreet in input.VantageStreets)
             {
                 var vantagePoints = VantagePoint.GetVantagePoints(siteRect, vantageStreet, model);
@@ -73,7 +84,7 @@ namespace NYCZR8127DaylightEvaluation
 
                 foreach (var vp in vantagePoints)
                 {
-                    var transform = new Transform(new Vector3(90.0 + vpIndex * 200.0, Units.FeetToMeters(100) + 20.0));
+                    var transform = new Transform(new Vector3(90.0 + vpIndex * 200.0, site.Max.Y + margin + verticalOffsetBase * vsIndex));
                     vp.Diagram.Draw(model, analysisObjects, input, transform, input.DebugVisualization, analysisObjectsForBlockage: analysisObjectsForBlockage);
 
                     var name = $"{vantageStreet.Name}: VP {vpIndex + 1}";
@@ -84,17 +95,40 @@ namespace NYCZR8127DaylightEvaluation
                     vpIndex += 1;
                 }
 
-                var vantageStreetScore = vantagePoints.Aggregate(0.0, (sum, vp) => sum + vp.Diagram.DaylightScore) / vantagePoints.Count;
+                var sumScores = vantagePoints.Aggregate(0.0, (sum, vp) => sum + vp.Diagram.DaylightScore);
+                var vantageStreetScore = sumScores / vantagePoints.Count;
+                var vantageStreetLength = vantagePoints[0].FrontLotLine.Length();
 
-                Console.WriteLine($"VANTAGE STREET SCORE: {vantageStreetScore}");
+                streetScores.Add(vantageStreetScore);
+                streetLengths += vantageStreetLength;
+                streetScoresTimesLengths += vantageStreetScore * vantageStreetLength;
 
-                if (vantageStreetScore < 66.0)
-                {
-                    // This is a failure
-                }
+                var outputVantageStreet = new DaylightEvaluationVantageStreet(vantageStreetScore, vantagePoints.Count, vantagePoints[0].CenterlineOffsetDist, Guid.NewGuid(), vantageStreet.Name);
+                model.AddElement(outputVantageStreet);
+
+                vsIndex += 1;
             }
 
             // TODO: sum up all vantage streets and normalize by street length. This must be more than 75, or 66 if E Midtown
+
+            var lowestStreetScore = new List<double>(streetScores).OrderBy(score => score).ToList()[0];
+            var overallScore = streetScoresTimesLengths / streetLengths;
+
+            var pass = true;
+
+            if (lowestStreetScore < 66)
+            {
+                pass = false;
+            }
+            if (overallScore < 75 || (input.QualifyForEastMidtownSubdistrict && overallScore < 66))
+            {
+                pass = false;
+            }
+
+            Console.WriteLine($"LOWEST SCORE: {lowestStreetScore}");
+            Console.WriteLine($"TOTAL SCORE: {overallScore}");
+
+            var output = new NYCZR8127DaylightEvaluationOutputs(lowestStreetScore, overallScore, pass ? "PASS" : "FAIL");
 
             output.Model = model;
 

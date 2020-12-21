@@ -57,7 +57,7 @@ namespace NYCZR8127DaylightEvaluation
         [Newtonsoft.Json.JsonProperty("Skip Subdivide", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public bool SkipSubdivide { get; set; } = false;
     
-        /// <summary>A list of vantage streets to calculate for</summary>
+        /// <summary>A list of vantage streets to calculate for.</summary>
         [Newtonsoft.Json.JsonProperty("Vantage Streets", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public IList<VantageStreets> VantageStreets { get; set; }
     
@@ -96,11 +96,11 @@ namespace NYCZR8127DaylightEvaluation
         }
     
         /// <summary>A line representing your vantage street, touching the lot line.</summary>
-        [Newtonsoft.Json.JsonProperty("Line", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonProperty("Line", Required = Newtonsoft.Json.Required.AllowNull)]
         public Line Line { get; set; }
     
         /// <summary>The depth of the block (not lot!) from this vantage street. Is used to calculate daylight boundaries, and only matters if block depth is less than 200'.</summary>
-        [Newtonsoft.Json.JsonProperty("Block Depth In Feet", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonProperty("Block Depth In Feet", Required = Newtonsoft.Json.Required.Always)]
         public double BlockDepthInFeet { get; set; } = 200D;
     
         /// <summary>Whether your vantage street is on a street designated in the zoning code as 'desired street wall continuity.' See Section 81-43: https://zr.planning.nyc.gov/article-viii/chapter-1#81-43.</summary>
@@ -108,13 +108,14 @@ namespace NYCZR8127DaylightEvaluation
         public bool StreetWallContinuity { get; set; }
     
         /// <summary>Width of your vantage street</summary>
-        [Newtonsoft.Json.JsonProperty("Width", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonProperty("Width", Required = Newtonsoft.Json.Required.Always)]
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
         [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
         public VantageStreetsWidth Width { get; set; } = VantageStreetsWidth._60ft;
     
         /// <summary>Name of your vantage street</summary>
         [Newtonsoft.Json.JsonProperty("Name", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string Name { get; set; } = "Unknown";
+        public string Name { get; set; } = "My Street Name";
     
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties = new System.Collections.Generic.Dictionary<string, object>();
     

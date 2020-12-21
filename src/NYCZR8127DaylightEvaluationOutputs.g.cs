@@ -16,6 +16,24 @@ namespace NYCZR8127DaylightEvaluation
 {
     public class NYCZR8127DaylightEvaluationOutputs: ResultsBase
     {
+		/// <summary>
+		/// A number below 66 means this design is not passing
+		/// </summary>
+		[JsonProperty("Lowest Street Score")]
+		public double LowestStreetScore {get;}
+
+		/// <summary>
+		/// A number below 75 means the lot does not pass, or below 66 if this is in the East Midtown Subdistrict
+		/// </summary>
+		[JsonProperty("Overall Daylight Score")]
+		public double OverallDaylightScore {get;}
+
+		/// <summary>
+		/// An ESTIMATE of whether your design is passing according to this calculation method.
+		/// </summary>
+		[JsonProperty("Result")]
+		public string Result {get;}
+
 
 
         /// <summary>
@@ -28,5 +46,23 @@ namespace NYCZR8127DaylightEvaluation
         }
 
 
+        /// <summary>
+        /// Construct a NYCZR8127DaylightEvaluationOutputs specifying all inputs.
+        /// </summary>
+        /// <returns></returns>
+        [JsonConstructor]
+        public NYCZR8127DaylightEvaluationOutputs(double lowestStreetScore, double overallDaylightScore, string result): base()
+        {
+			this.LowestStreetScore = lowestStreetScore;
+			this.OverallDaylightScore = overallDaylightScore;
+			this.Result = result;
+
+		}
+
+		public override string ToString()
+		{
+			var json = JsonConvert.SerializeObject(this);
+			return json;
+		}
 	}
 }

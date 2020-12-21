@@ -136,7 +136,7 @@ namespace NYCZR8127DaylightEvaluation
             }
             var siteCentroid = rectangularSite.Centroid();
             var midpoint = vantageStreet.Line.PointAt(0.5);
-            var lotLines = rectangularSite.Segments().OrderBy(segment => midpoint.DistanceTo(segment)).ToList();
+            var lotLines = new List<Line>(rectangularSite.Segments()).OrderBy(segment => midpoint.DistanceTo(segment)).ToList();
             var frontLotLine = lotLines[0];
             var centerlineOffsetDist = Settings.CenterlineDistances[vantageStreet.Width] / 2;
             var directionToStreet = new Vector3(frontLotLine.PointAt(0.5) - siteCentroid).Unitized() * centerlineOffsetDist;
