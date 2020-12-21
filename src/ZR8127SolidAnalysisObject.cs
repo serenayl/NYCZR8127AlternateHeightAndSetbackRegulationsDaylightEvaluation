@@ -10,12 +10,15 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
 
     public class SolidAnalysisObject
     {
-        private static double divisionLength = Units.FeetToMeters(10.0);
-        public static Model model = null;
-        public static Boolean skipSubdivide = false;
-        public Dictionary<long, Vector3> points = new Dictionary<long, Vector3>();
-        public Dictionary<long, List<long>> lines = new Dictionary<long, List<long>>();
-        public List<List<Elements.Geometry.Solids.HalfEdge>> surfaces = new List<List<Elements.Geometry.Solids.HalfEdge>>();
+        private static double DivisionLength = Units.FeetToMeters(10.0);
+        public static Boolean SkipSubdivide = false;
+        public Dictionary<long, Vector3> Points = new Dictionary<long, Vector3>();
+        public Dictionary<long, List<long>> Lines = new Dictionary<long, List<long>>();
+        public List<List<Elements.Geometry.Solids.HalfEdge>> Surfaces = new List<List<Elements.Geometry.Solids.HalfEdge>>();
+
+        // TODO: delete when we don't need to debug anymore
+        public static Model Model = null;
+
         public SolidAnalysisObject(Elements.Geometry.Solids.SolidOperation solid, Transform transform)
         {
             var solidTransform = solid.LocalTransform;
@@ -28,23 +31,25 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                 var point = vertex.Value.Point;
                 var locallyTransformedPoint = solidTransform == null ? new Vector3(point) : solidTransform.OfVector(vertex.Value.Point);
                 var globallyTransformedPoint = transform.OfVector(locallyTransformedPoint);
-                this.points.Add(key, globallyTransformedPoint);
+                this.Points.Add(key, globallyTransformedPoint);
                 maxVertexKey = Math.Max(maxVertexKey, key);
             }
 
             foreach (var edge in solid.Solid.Edges)
             {
-                if (this.points.TryGetValue(edge.Value.Left.Vertex.Id, out var start) && this.points.TryGetValue(edge.Value.Right.Vertex.Id, out var end))
+                if (this.Points.TryGetValue(edge.Value.Left.Vertex.Id, out var start) && this.Points.TryGetValue(edge.Value.Right.Vertex.Id, out var end))
                 {
                     var dist = start.DistanceTo(end);
                     var line = new Line(start, end);
-                    model.AddElement(new ModelCurve(line));
-                    if (!skipSubdivide && dist > divisionLength && (start.X != end.X || start.Y != end.Y))
+
+                    Model.AddElement(new ModelCurve(line));
+
+                    if (!SkipSubdivide && dist > DivisionLength && (start.X != end.X || start.Y != end.Y))
                     {
                         var indices = new List<long>() { edge.Value.Left.Vertex.Id };
 
                         var grid = new Grid1d(line);
-                        grid.DivideByFixedLength(divisionLength, FixedDivisionMode.RemainderAtBothEnds);
+                        grid.DivideByFixedLength(DivisionLength, FixedDivisionMode.RemainderAtBothEnds);
                         var cells = grid.GetCells();
 
                         // Get lines representing each 10' cell
@@ -55,18 +60,18 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                         {
                             var index = maxVertexKey + 1;
                             var point = cellLine.PointAt(1.0);
-                            this.points.Add(index, point);
+                            this.Points.Add(index, point);
                             indices.Add(index);
                             maxVertexKey = index;
                         }
 
                         // Add right point
                         indices.Add(edge.Value.Right.Vertex.Id);
-                        this.lines.Add(edge.Key, indices);
+                        this.Lines.Add(edge.Key, indices);
                     }
                     else
                     {
-                        this.lines.Add(edge.Key, new List<long>() { edge.Value.Left.Vertex.Id, edge.Value.Right.Vertex.Id });
+                        this.Lines.Add(edge.Key, new List<long>() { edge.Value.Left.Vertex.Id, edge.Value.Right.Vertex.Id });
                     }
 
                 }
@@ -84,7 +89,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                     edges.Add(edge);
                 }
                 // TODO: do not include faces that sit at zero
-                this.surfaces.Add(edges);
+                this.Surfaces.Add(edges);
             }
         }
 

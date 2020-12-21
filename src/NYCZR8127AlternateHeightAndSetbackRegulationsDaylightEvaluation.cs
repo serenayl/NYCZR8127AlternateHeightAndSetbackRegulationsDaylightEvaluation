@@ -32,14 +32,14 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                 inputModels.TryGetValue("Site", out var siteModel);
                 inputModels.TryGetValue("Envelope", out var envelopeModel);
 
-                siteInput = GetSite(inputModels, siteModel);
-                envelopes = GetEnvelopes(inputModels, envelopeModel);
+                siteInput = getSite(inputModels, siteModel);
+                envelopes = getEnvelopes(inputModels, envelopeModel);
             }
             else
             {
                 Console.WriteLine("Using combo EnvelopeAndSite");
-                siteInput = GetSite(inputModels, envelopeAndSite);
-                envelopes = GetEnvelopes(inputModels, envelopeAndSite);
+                siteInput = getSite(inputModels, envelopeAndSite);
+                envelopes = getEnvelopes(inputModels, envelopeAndSite);
             }
 
             if (siteInput == null)
@@ -51,10 +51,15 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                 throw new ArgumentException("There were no envelopes found. Please make sure you either meet the dependency of 'Envelope' or the dependency of 'EnvelopeAndSite.");
             }
 
-            SolidAnalysisObject.model = model;
-            SolidAnalysisObject.skipSubdivide = input.SkipSubdivide;
+            SolidAnalysisObject.Model = model;
+            SolidAnalysisObject.SkipSubdivide = input.SkipSubdivide;
 
             var analysisObjects = SolidAnalysisObject.MakeFromEnvelopes(envelopes);
+
+            // Only applicable for E Midtown
+            List<Envelope> envelopesForBlockage = input.QualifyForEastMidtownSubdistrict ? getEastMidtownEnvelopes(envelopes) : null;
+            var analysisObjectsForBlockage = input.QualifyForEastMidtownSubdistrict ? SolidAnalysisObject.MakeFromEnvelopes(envelopesForBlockage) : null;
+
             var site = siteInput.Perimeter.Bounds();
             var siteRect = Polygon.Rectangle(new Vector3(site.Min.X, site.Min.Y), new Vector3(site.Max.X, site.Max.Y));
 
@@ -69,7 +74,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                 foreach (var vp in vantagePoints)
                 {
                     var transform = new Transform(new Vector3(90.0 + vpIndex * 200.0, Units.FeetToMeters(100) + 20.0));
-                    vp.Diagram.Draw(model, analysisObjects, input, transform, input.DebugVisualization);
+                    vp.Diagram.Draw(model, analysisObjects, input, transform, input.DebugVisualization, analysisObjectsForBlockage: analysisObjectsForBlockage);
                     vpIndex += 1;
                 }
 
@@ -91,7 +96,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         }
 
         // Grab the biggest site's bounding box from the model
-        public static Site GetSite(Dictionary<string, Model> inputModels, Model model)
+        private static Site getSite(Dictionary<string, Model> inputModels, Model model)
         {
             if (model == null)
             {
@@ -105,7 +110,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         }
 
         // Grab envelopes from the model
-        public static List<Envelope> GetEnvelopes(Dictionary<string, Model> inputModels, Model model)
+        private static List<Envelope> getEnvelopes(Dictionary<string, Model> inputModels, Model model)
         {
             if (model == null)
             {
@@ -114,6 +119,45 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             var envelopes = new List<Envelope>();
             envelopes.AddRange(model.AllElementsOfType<Envelope>());
             return envelopes;
+        }
+
+        private static List<Envelope> getEastMidtownEnvelopes(List<Envelope> envelopes)
+        {
+            var up = new Vector3(0, 0, 1);
+            var cutHeight = Units.FeetToMeters(150.0);
+            var envelopesForBlockage = new List<Envelope>();
+
+            foreach (var envelope in envelopes)
+            {
+                var bottom = envelope.Elevation;
+                var top = bottom + envelope.Height;
+
+                if (top < cutHeight)
+                {
+                    // This envelope is below the cut height and will be thrown away
+                    continue;
+                }
+
+                if (bottom >= cutHeight)
+                {
+                    // envelope is above the cutoff, use as-is
+                    envelopesForBlockage.Add(envelope);
+                }
+                else
+                {
+                    var extrude1 = new Elements.Geometry.Solids.Extrude(envelope.Profile, cutHeight, up, false);
+                    var rep1 = new Representation(new List<Elements.Geometry.Solids.SolidOperation>() { extrude1 });
+                    var env1 = new Envelope(envelope.Profile, 0, cutHeight, up, 0, new Transform(), envelope.Material, rep1, false, Guid.NewGuid(), "");
+                    envelopesForBlockage.Add(env1);
+
+                    var extrude2 = new Elements.Geometry.Solids.Extrude(envelope.Profile, top - cutHeight, up, false);
+                    var rep2 = new Representation(new List<Elements.Geometry.Solids.SolidOperation>() { extrude2 });
+                    var env2 = new Envelope(envelope.Profile, cutHeight, top - cutHeight, up, 0, new Transform(new Vector3(0, 0, cutHeight)), envelope.Material, rep2, false, Guid.NewGuid(), "");
+                    envelopesForBlockage.Add(env2);
+                }
+            }
+
+            return envelopesForBlockage;
         }
     }
 }

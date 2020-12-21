@@ -37,8 +37,6 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         public Dictionary<(double, double), Square> SquaresAboveCutoff = new Dictionary<(double, double), Square>();
         public List<Polyline> ProfileCurves = new List<Polyline>();
         public List<Polygon> ProfilePolygons = new List<Polygon>();
-        public List<Polygon> RawSilhouettes;
-        public List<Polygon> DrawSilhouettes;
 
         public double DaylightBlockage;
         public double UnblockedDaylightCredit;
@@ -231,14 +229,6 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                 var profileCurve = new ModelCurve(polyline, profileCurveMaterial, transform);
                 model.AddElement(profileCurve);
             }
-
-            // foreach (var rawProfilePolygon in this.ProfilePolygons)
-            // {
-            //     var coordinates = rawProfilePolygon.Vertices.Select(pt => this.vp.GetAnalysisPoint(pt.X, pt.Y, useRawAngles).DrawCoordinate).ToArray();
-            //     var polygon = new Polygon(coordinates);
-            //     var profilePolygon = new ModelCurve(polygon, profileCurveMaterial, transform);
-            //     model.AddElement(profilePolygon);
-            // }
         }
 
         private void makeProfileCurves()
@@ -393,25 +383,29 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             }
         }
 
-        private void drawAndCalculateSilhouettes(Model model, List<SolidAnalysisObject> analysisObjects, Transform transform = null, Boolean useRawAngles = false)
+        /// <summary>
+        /// Returns raw silhouettes, and out param is the silhouettes to draw depending on whether we are using raw angles to draw
+        /// </summary>
+        private List<Polygon> calculateSilhouettes(List<SolidAnalysisObject> analysisObjects, out List<Polygon> drawSilhouettes, out List<Polyline> drawPolylines, Boolean useRawAngles = false)
         {
             var rawPolygons = new List<Polygon>();
             var drawPolygons = new List<Polygon>();
+
+            drawPolylines = new List<Polyline>();
 
             foreach (var analysisObject in analysisObjects)
             {
                 var analysisPoints = new Dictionary<long, AnalysisPoint>();
 
-                foreach (var point in analysisObject.points)
+                foreach (var point in analysisObject.Points)
                 {
                     var analysisPoint = vp.GetAnalysisPoint(point.Value, useRawAngles);
                     analysisPoints.Add(point.Key, analysisPoint);
                 }
 
                 var edges = new Dictionary<long, List<AnalysisPoint>>();
-                var edgeMaterial = Settings.Materials[Settings.MaterialPalette.BuildingEdges];
 
-                foreach (var lineMapping in analysisObject.lines)
+                foreach (var lineMapping in analysisObject.Lines)
                 {
                     var edgePoints = new List<AnalysisPoint>();
 
@@ -424,7 +418,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                     edges.Add(lineMapping.Key, edgePoints);
                 }
 
-                foreach (var surface in analysisObject.surfaces)
+                foreach (var surface in analysisObject.Surfaces)
                 {
                     var srfAPs = new List<AnalysisPoint>();
 
@@ -480,8 +474,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                     try
                     {
                         var polyline = new Polyline(points);
-                        var modelCurve = new ModelCurve(polyline, edgeMaterial, transform);
-                        model.AddElement(modelCurve);
+                        drawPolylines.Add(polyline);
                     }
                     catch (ArgumentException e)
                     {
@@ -496,22 +489,11 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             }
 
             // Raw angle polygon(s), from which we will run our calculations
-            this.RawSilhouettes = new List<Polygon>(Polygon.UnionAll(rawPolygons));
+            var unionedRawPolygons = new List<Polygon>(Polygon.UnionAll(rawPolygons));
 
-            if (useRawAngles)
-            {
-                this.DrawSilhouettes = this.RawSilhouettes;
-            }
-            else
-            {
-                this.DrawSilhouettes = new List<Polygon>(Polygon.UnionAll(drawPolygons));
-            }
+            drawSilhouettes = useRawAngles ? unionedRawPolygons : new List<Polygon>(Polygon.UnionAll(drawPolygons));
 
-            foreach (var silhouette in this.DrawSilhouettes)
-            {
-                var panel = new Panel(silhouette, Settings.Materials[Settings.MaterialPalette.Silhouette], transform);
-                model.AddElement(panel);
-            }
+            return unionedRawPolygons;
         }
 
         #endregion PrivateUtils
@@ -562,17 +544,33 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         public void Draw(
             Model model,
             List<SolidAnalysisObject> analysisObjects,
-             NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationInputs input,
-             Transform transform = null,
-             Boolean useRawAngles = false
+            NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationInputs input,
+            Transform transform = null,
+            Boolean useRawAngles = false,
+            List<SolidAnalysisObject> analysisObjectsForBlockage = null
         )
         {
             this.drawGrid(model, transform, useRawAngles);
-            this.drawAndCalculateSilhouettes(model, analysisObjects, transform, useRawAngles);
 
-            this.DaylightBlockage = this.calculateDaylightBlockage(out var blockedDaylightSubsquares);
-            this.UnblockedDaylightCredit = this.calculateUnblockedDaylight(input, out var unblockedSubsquares);
-            this.ProfilePenalty = this.calculateProfilePenalty(input, out var penaltySubsquares);
+            var rawSilhouettes = this.calculateSilhouettes(analysisObjects, out var drawSilhouettes, out var drawPolylines, useRawAngles);
+            var blockageSilhouettes = analysisObjectsForBlockage == null ? rawSilhouettes : this.calculateSilhouettes(analysisObjectsForBlockage, out var drawSilhouettesBlockage, out var drawPolylinesBlockage, useRawAngles);
+
+            var edgeMaterial = Settings.Materials[Settings.MaterialPalette.BuildingEdges];
+            foreach (var polyline in drawPolylines)
+            {
+                var modelCurve = new ModelCurve(polyline, edgeMaterial, transform);
+                model.AddElement(modelCurve);
+            }
+
+            foreach (var silhouette in drawSilhouettes)
+            {
+                var panel = new Panel(silhouette, Settings.Materials[Settings.MaterialPalette.Silhouette], transform);
+                model.AddElement(panel);
+            }
+
+            this.DaylightBlockage = this.calculateDaylightBlockage(blockageSilhouettes, out var blockedDaylightSubsquares);
+            this.UnblockedDaylightCredit = this.calculateUnblockedDaylight(rawSilhouettes, input, out var unblockedSubsquares);
+            this.ProfilePenalty = this.calculateProfilePenalty(blockageSilhouettes, input, out var penaltySubsquares);
             this.AvailableDaylight = this.SquaresAboveCutoff.Values.Aggregate(0.0, (sum, square) => sum + square.PlanGrid.Multiplier);
             this.DaylightRemaining = this.DaylightBlockage + this.UnblockedDaylightCredit + this.ProfilePenalty + this.AvailableDaylight;
             this.DaylightScore = this.DaylightRemaining / this.AvailableDaylight * 100;
@@ -601,13 +599,13 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             }
         }
 
-        private double calculateDaylightBlockage(out List<Square> subSquares)
+        private double calculateDaylightBlockage(List<Polygon> rawSilhouettes, out List<Square> subSquares)
         {
             subSquares = new List<Square>();
 
             var daylightBlockage = 0.0;
 
-            foreach (var rawSilhouette in this.RawSilhouettes)
+            foreach (var rawSilhouette in rawSilhouettes)
             {
                 foreach (var square in this.SquaresAboveCutoff.Values)
                 {
@@ -645,7 +643,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             return daylightBlockage;
         }
 
-        private double calculateUnblockedDaylight(NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationInputs input, out List<Square> subSquares)
+        private double calculateUnblockedDaylight(List<Polygon> rawSilhouettes, NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationInputs input, out List<Square> subSquares)
         {
             subSquares = new List<Square>();
 
@@ -655,7 +653,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             }
             var credit = 0.0;
 
-            foreach (var rawSilhouette in this.RawSilhouettes)
+            foreach (var rawSilhouette in rawSilhouettes)
             {
                 foreach (var square in this.SquaresBelowCutoff.Values)
                 {
@@ -693,7 +691,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             return credit;
         }
 
-        private double calculateProfilePenalty(NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationInputs input, out List<Square> subSquares)
+        private double calculateProfilePenalty(List<Polygon> rawSilhouettes, NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationInputs input, out List<Square> subSquares)
         {
             subSquares = new List<Square>();
 
@@ -705,13 +703,11 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                 return penalty;
             }
 
-            foreach (var rawSilhouette in this.RawSilhouettes)
+            foreach (var rawSilhouette in rawSilhouettes)
             {
                 foreach (var profilePolygon in this.ProfilePolygons)
                 {
                     var penaltyAreas = rawSilhouette.Intersection(profilePolygon);
-
-                    Console.WriteLine($"Intersections: {penaltyAreas.Count}");
 
                     foreach (var penaltyArea in penaltyAreas)
                     {
