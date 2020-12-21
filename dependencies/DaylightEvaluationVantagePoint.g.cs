@@ -27,17 +27,16 @@ namespace Elements
 	public partial class DaylightEvaluationVantagePoint : Element
     {
         [Newtonsoft.Json.JsonConstructor]
-        public DaylightEvaluationVantagePoint(string @vantageName, Vector3 @position, double @daylightBlockage, double @unblockedDaylightCredit, double @profileDaylightBlockage, double @availableDaylight, double @daylightRemaining, double @daylightScore, System.Guid @id, string @name)
+        public DaylightEvaluationVantagePoint(Vector3 @position, double @daylightBlockage, double @unblockedDaylightCredit, double @profileDaylightBlockage, double @availableDaylight, double @daylightRemaining, double @daylightScore, System.Guid @id, string @name)
             : base(id, name)
         {
             var validator = Validator.Instance.GetFirstValidatorForType<DaylightEvaluationVantagePoint>
             ();
             if(validator != null)
             {
-                validator.PreConstruct(new object[]{ @vantageName, @position, @daylightBlockage, @unblockedDaylightCredit, @profileDaylightBlockage, @availableDaylight, @daylightRemaining, @daylightScore, @id, @name});
+                validator.PreConstruct(new object[]{ @position, @daylightBlockage, @unblockedDaylightCredit, @profileDaylightBlockage, @availableDaylight, @daylightRemaining, @daylightScore, @id, @name});
             }
         
-                this.VantageName = @vantageName;
                 this.Position = @position;
                 this.DaylightBlockage = @daylightBlockage;
                 this.UnblockedDaylightCredit = @unblockedDaylightCredit;
@@ -51,10 +50,6 @@ namespace Elements
             validator.PostConstruct(this);
             }
             }
-    
-        /// <summary>Vantage point name.</summary>
-        [Newtonsoft.Json.JsonProperty("VantageName", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string VantageName { get; set; }
     
         /// <summary>The position of the vantage point.</summary>
         [Newtonsoft.Json.JsonProperty("Position", Required = Newtonsoft.Json.Required.AllowNull)]

@@ -12,15 +12,15 @@ using System.Reflection;
 using System.Threading.Tasks;
 
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
-namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
+namespace NYCZR8127DaylightEvaluation
 {
     public class Function
     {
         // Cache the model store for use by subsequent
         // executions of this lambda.
-        private IModelStore<NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationInputs> store;
+        private IModelStore<NYCZR8127DaylightEvaluationInputs> store;
 
-        public async Task<NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationOutputs> Handler(NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationInputs args, ILambdaContext context)
+        public async Task<NYCZR8127DaylightEvaluationOutputs> Handler(NYCZR8127DaylightEvaluationInputs args, ILambdaContext context)
         {
             if(this.store == null)
             {
@@ -38,10 +38,10 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
                     Console.WriteLine("Dependencies assembly loaded.");
                 }
 
-                this.store = new S3ModelStore<NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationInputs>(RegionEndpoint.USWest1);
+                this.store = new S3ModelStore<NYCZR8127DaylightEvaluationInputs>(RegionEndpoint.USWest1);
             }
 
-            var l = new InvocationWrapper<NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationInputs,NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationOutputs>(store, NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation.Execute);
+            var l = new InvocationWrapper<NYCZR8127DaylightEvaluationInputs,NYCZR8127DaylightEvaluationOutputs>(store, NYCZR8127DaylightEvaluation.Execute);
             var output = await l.InvokeAsync(args);
             return output;
         }
