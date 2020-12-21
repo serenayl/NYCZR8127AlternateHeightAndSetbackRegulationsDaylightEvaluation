@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System;
 using System.Linq;
 
-namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
+namespace NYCZR8127DaylightEvaluation
 {
-    public static class NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
+    public static class NYCZR8127DaylightEvaluation
     {
 
         /// <summary>
@@ -14,12 +14,12 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         /// </summary>
         /// <param name="model">The input model.</param>
         /// <param name="input">The arguments to the execution.</param>
-        /// <returns>A NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationOutputs instance containing computed results and the model with any new elements.</returns>
-        public static NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationOutputs Execute(Dictionary<string, Model> inputModels, NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationInputs input)
+        /// <returns>A NYCZR8127DaylightEvaluationOutputs instance containing computed results and the model with any new elements.</returns>
+        public static NYCZR8127DaylightEvaluationOutputs Execute(Dictionary<string, Model> inputModels, NYCZR8127DaylightEvaluationInputs input)
         {
             var model = new Model();
 
-            var output = new NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationOutputs();
+            var output = new NYCZR8127DaylightEvaluationOutputs();
 
             Site siteInput = null;
             List<Envelope> envelopes = null;

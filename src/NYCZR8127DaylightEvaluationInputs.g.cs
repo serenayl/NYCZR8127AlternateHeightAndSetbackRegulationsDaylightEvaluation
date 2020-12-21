@@ -18,29 +18,29 @@ using System.Linq;
 using Line = Elements.Geometry.Line;
 using Polygon = Elements.Geometry.Polygon;
 
-namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
+namespace NYCZR8127DaylightEvaluation
 {
     #pragma warning disable // Disable all warnings
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "10.1.21.0 (Newtonsoft.Json v12.0.0.0)")]
     
-    public  class NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationInputs : S3Args
+    public  class NYCZR8127DaylightEvaluationInputs : S3Args
     
     {
         [Newtonsoft.Json.JsonConstructor]
         
-        public NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationInputs(IList<VantageStreets> @vantageStreets, bool @qualifyForEastMidtownSubdistrict, bool @skipSubdivide, bool @debugVisualization, string bucketName, string uploadsBucket, Dictionary<string, string> modelInputKeys, string gltfKey, string elementsKey, string ifcKey):
+        public NYCZR8127DaylightEvaluationInputs(bool @qualifyForEastMidtownSubdistrict, bool @skipSubdivide, IList<VantageStreets> @vantageStreets, bool @debugVisualization, string bucketName, string uploadsBucket, Dictionary<string, string> modelInputKeys, string gltfKey, string elementsKey, string ifcKey):
         base(bucketName, uploadsBucket, modelInputKeys, gltfKey, elementsKey, ifcKey)
         {
-            var validator = Validator.Instance.GetFirstValidatorForType<NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationInputs>();
+            var validator = Validator.Instance.GetFirstValidatorForType<NYCZR8127DaylightEvaluationInputs>();
             if(validator != null)
             {
-                validator.PreConstruct(new object[]{ @vantageStreets, @qualifyForEastMidtownSubdistrict, @skipSubdivide, @debugVisualization});
+                validator.PreConstruct(new object[]{ @qualifyForEastMidtownSubdistrict, @skipSubdivide, @vantageStreets, @debugVisualization});
             }
         
-            this.VantageStreets = @vantageStreets;
             this.QualifyForEastMidtownSubdistrict = @qualifyForEastMidtownSubdistrict;
             this.SkipSubdivide = @skipSubdivide;
+            this.VantageStreets = @vantageStreets;
             this.DebugVisualization = @debugVisualization;
         
             if(validator != null)
@@ -49,10 +49,6 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             }
         }
     
-        /// <summary>A list of vantage streets to calculate for</summary>
-        [Newtonsoft.Json.JsonProperty("Vantage Streets", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public IList<VantageStreets> VantageStreets { get; set; }
-    
         /// <summary>Whether your site is subject to the height and setback modifications specified in section 81-663. Modifications made: - Daylight blockage will be calculated at the intersection of 150' height projected downward, and using the input building from 150' upward. - There will be no encroachment penalty - Daylight credit will be given even if street continuity is on.</summary>
         [Newtonsoft.Json.JsonProperty("Qualify for East Midtown Subdistrict", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public bool QualifyForEastMidtownSubdistrict { get; set; }
@@ -60,6 +56,10 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         /// <summary>Skip the portion of the code that subdivides your non-vertical edges into the 10' segments as specified by the code. Use this if your analysis is taking too long or timing out. Results will be less visually accurate and possibly less numerically accurate, but should give you a reasonable estimate of results. Use this with 'Debug Visualization' on in order to minimize difference between visual and numbers.</summary>
         [Newtonsoft.Json.JsonProperty("Skip Subdivide", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public bool SkipSubdivide { get; set; } = false;
+    
+        /// <summary>A list of vantage streets to calculate for</summary>
+        [Newtonsoft.Json.JsonProperty("Vantage Streets", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public IList<VantageStreets> VantageStreets { get; set; }
     
         /// <summary>Visualize raw plan and section angles, rather than curved projections on a modified vertical scale. This is the grid and projection that is actually used to calculate all intersections and numbers, while the final curved version is for display.</summary>
         [Newtonsoft.Json.JsonProperty("Debug Visualization", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
@@ -75,19 +75,19 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
     
     {
         [Newtonsoft.Json.JsonConstructor]
-        public VantageStreets(string @name, Line @line, VantageStreetsWidth @width, double @blockDepthInFeet, bool @streetWallContinuity)
+        public VantageStreets(Line @line, double @blockDepthInFeet, bool @streetWallContinuity, VantageStreetsWidth @width, string @name)
         {
             var validator = Validator.Instance.GetFirstValidatorForType<VantageStreets>();
             if(validator != null)
             {
-                validator.PreConstruct(new object[]{ @name, @line, @width, @blockDepthInFeet, @streetWallContinuity});
+                validator.PreConstruct(new object[]{ @line, @blockDepthInFeet, @streetWallContinuity, @width, @name});
             }
         
-            this.Name = @name;
             this.Line = @line;
-            this.Width = @width;
             this.BlockDepthInFeet = @blockDepthInFeet;
             this.StreetWallContinuity = @streetWallContinuity;
+            this.Width = @width;
+            this.Name = @name;
         
             if(validator != null)
             {
@@ -95,18 +95,9 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             }
         }
     
-        /// <summary>Name of your vantage street</summary>
-        [Newtonsoft.Json.JsonProperty("Name", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string Name { get; set; } = "Unknown";
-    
         /// <summary>A line representing your vantage street, touching the lot line.</summary>
         [Newtonsoft.Json.JsonProperty("Line", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public Line Line { get; set; }
-    
-        /// <summary>Width of your vantage street</summary>
-        [Newtonsoft.Json.JsonProperty("Width", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public VantageStreetsWidth Width { get; set; } = VantageStreetsWidth._60ft;
     
         /// <summary>The depth of the block (not lot!) from this vantage street. Is used to calculate daylight boundaries, and only matters if block depth is less than 200'.</summary>
         [Newtonsoft.Json.JsonProperty("Block Depth In Feet", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
@@ -115,6 +106,15 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         /// <summary>Whether your vantage street is on a street designated in the zoning code as 'desired street wall continuity.' See Section 81-43: https://zr.planning.nyc.gov/article-viii/chapter-1#81-43.</summary>
         [Newtonsoft.Json.JsonProperty("Street Wall Continuity", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public bool StreetWallContinuity { get; set; }
+    
+        /// <summary>Width of your vantage street</summary>
+        [Newtonsoft.Json.JsonProperty("Width", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+        public VantageStreetsWidth Width { get; set; } = VantageStreetsWidth._60ft;
+    
+        /// <summary>Name of your vantage street</summary>
+        [Newtonsoft.Json.JsonProperty("Name", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string Name { get; set; } = "Unknown";
     
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties = new System.Collections.Generic.Dictionary<string, object>();
     

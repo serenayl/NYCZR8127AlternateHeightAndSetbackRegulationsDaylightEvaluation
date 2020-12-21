@@ -5,7 +5,7 @@ using Elements;
 using Elements.Geometry;
 using Elements.Spatial;
 
-namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
+namespace NYCZR8127DaylightEvaluation
 {
 
     public class SolidAnalysisObject

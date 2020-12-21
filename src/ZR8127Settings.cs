@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Elements;
 using Elements.Geometry;
 
-namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
+namespace NYCZR8127DaylightEvaluation
 {
     public class Settings
     {

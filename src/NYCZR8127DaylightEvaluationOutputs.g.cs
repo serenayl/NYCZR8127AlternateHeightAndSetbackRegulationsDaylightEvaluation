@@ -12,17 +12,17 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System.Collections.Generic;
 
-namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
+namespace NYCZR8127DaylightEvaluation
 {
-    public class NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationOutputs: ResultsBase
+    public class NYCZR8127DaylightEvaluationOutputs: ResultsBase
     {
 
 
         /// <summary>
-        /// Construct a NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationOutputs with default inputs.
+        /// Construct a NYCZR8127DaylightEvaluationOutputs with default inputs.
         /// This should be used for testing only.
         /// </summary>
-        public NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationOutputs() : base()
+        public NYCZR8127DaylightEvaluationOutputs() : base()
         {
 
         }

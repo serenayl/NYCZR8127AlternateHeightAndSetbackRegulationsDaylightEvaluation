@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation", "src\NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation.csproj", "{850C2C8A-4C8A-4831-80EF-28C7F5EE36F4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NYCZR8127DaylightEvaluation", "src\NYCZR8127DaylightEvaluation.csproj", "{850C2C8A-4C8A-4831-80EF-28C7F5EE36F4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation.Dependencies", "dependencies\NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation.Dependencies.csproj", "{3EAC88FE-574A-415C-96F0-D331AC84C84F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NYCZR8127DaylightEvaluation.Dependencies", "dependencies\NYCZR8127DaylightEvaluation.Dependencies.csproj", "{3EAC88FE-574A-415C-96F0-D331AC84C84F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation.Tests", "test\NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation.Tests.csproj", "{CF20FFB0-891D-44D4-B2F6-B7C4D977567E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NYCZR8127DaylightEvaluation.Tests", "test\NYCZR8127DaylightEvaluation.Tests.csproj", "{CF20FFB0-891D-44D4-B2F6-B7C4D977567E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

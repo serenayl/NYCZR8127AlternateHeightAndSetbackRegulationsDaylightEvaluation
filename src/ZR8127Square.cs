@@ -5,7 +5,7 @@ using Elements.Spatial;
 using System;
 using System.Linq;
 
-namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
+namespace NYCZR8127DaylightEvaluation
 {
     public class PlanOrSectionGrid
     {

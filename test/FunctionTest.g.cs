@@ -10,7 +10,7 @@ using Xunit.Abstractions;
 using System;
 using System.Collections.Generic;
 
-namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation.Tests
+namespace NYCZR8127DaylightEvaluation.Tests
 {
     public class FunctionTests
     {

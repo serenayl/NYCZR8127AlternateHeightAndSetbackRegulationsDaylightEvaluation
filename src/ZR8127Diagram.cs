@@ -5,7 +5,7 @@ using Elements.Spatial;
 using System;
 using System.Linq;
 
-namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
+namespace NYCZR8127DaylightEvaluation
 {
     public class Diagram
     {
@@ -544,7 +544,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         public void Draw(
             Model model,
             List<SolidAnalysisObject> analysisObjects,
-            NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationInputs input,
+            NYCZR8127DaylightEvaluationInputs input,
             Transform transform = null,
             Boolean useRawAngles = false,
             List<SolidAnalysisObject> analysisObjectsForBlockage = null
@@ -643,7 +643,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             return daylightBlockage;
         }
 
-        private double calculateUnblockedDaylight(List<Polygon> rawSilhouettes, NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationInputs input, out List<Square> subSquares)
+        private double calculateUnblockedDaylight(List<Polygon> rawSilhouettes, NYCZR8127DaylightEvaluationInputs input, out List<Square> subSquares)
         {
             subSquares = new List<Square>();
 
@@ -691,7 +691,7 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
             return credit;
         }
 
-        private double calculateProfilePenalty(List<Polygon> rawSilhouettes, NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluationInputs input, out List<Square> subSquares)
+        private double calculateProfilePenalty(List<Polygon> rawSilhouettes, NYCZR8127DaylightEvaluationInputs input, out List<Square> subSquares)
         {
             subSquares = new List<Square>();
 

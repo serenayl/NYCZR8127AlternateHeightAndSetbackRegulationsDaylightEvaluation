@@ -4,7 +4,7 @@ using Elements;
 using Elements.Geometry;
 using System.Linq;
 
-namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
+namespace NYCZR8127DaylightEvaluation
 {
     public class AnalysisPoint
     {
@@ -130,6 +130,10 @@ namespace NYCZR8127AlternateHeightAndSetbackRegulationsDaylightEvaluation
         /// <returns></returns>
         public static List<VantagePoint> GetVantagePoints(Polygon rectangularSite, VantageStreets vantageStreet, Model model = null)
         {
+            if (vantageStreet.Line == null)
+            {
+                throw new Exception("Each vantage street must have a line designating its rough location. Please draw a line outside of your lot that represents the centerline of your vantage street. It does not need to be straight or exactly parallel to the lot line, but it must exist.");
+            }
             var siteCentroid = rectangularSite.Centroid();
             var midpoint = vantageStreet.Line.PointAt(0.5);
             var lotLines = rectangularSite.Segments().OrderBy(segment => midpoint.DistanceTo(segment)).ToList();
