@@ -127,7 +127,8 @@
     "https://prod-api.hypar.io/schemas/Envelope",
     "https://raw.githubusercontent.com/hypar-io/Schemas/master/Site.json",
     "https://raw.githubusercontent.com/hypar-io/Schemas/daylight-evaluation/NYCDaylightEvaluationVantagePoint.json",
-    "https://raw.githubusercontent.com/hypar-io/Schemas/daylight-evaluation/NYCDaylightEvaluationVantageStreet.json"
+    "https://raw.githubusercontent.com/hypar-io/Schemas/daylight-evaluation/NYCDaylightEvaluationVantageStreet.json",
+    "https://prod-api.hypar.io/schemas/SVGGraphic"
   ],
   "repository_url": "",
   "source_file_key": null,

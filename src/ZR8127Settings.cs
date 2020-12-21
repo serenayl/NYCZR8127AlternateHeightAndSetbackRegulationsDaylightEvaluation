@@ -66,6 +66,21 @@ namespace NYCZR8127DaylightEvaluation
             }
         };
 
+        private static Color transparentColor = new Color(0, 0, 0, 0);
+
+        public static Dictionary<MaterialPalette, SVG.Style> SvgStyles => new Dictionary<MaterialPalette, SVG.Style> {
+            {MaterialPalette.Silhouette, new SVG.Style()},
+            {MaterialPalette.BuildingEdges, new SVG.Style()},
+            {MaterialPalette.GridlinesMajor, new SVG.Style(strokeWidth:0.1, enableFill: false, enableStroke: true, stroke: Colors.Black, fill: transparentColor)},
+            {MaterialPalette.GridlinesMinor, new SVG.Style(strokeWidth:0.05, enableFill: false, enableStroke: true, stroke: Colors.Gray, fill: transparentColor)},
+            {MaterialPalette.GridlinesIrrelevant, new SVG.Style()},
+            {MaterialPalette.DaylightBoundaries, new SVG.Style()},
+            {MaterialPalette.ProfileCurves, new SVG.Style()},
+            {MaterialPalette.BlockedDaylight, new SVG.Style()},
+            {MaterialPalette.ProfileEncroachment, new SVG.Style()},
+            {MaterialPalette.UnblockedCredit, new SVG.Style()}
+        };
+
         public static Dictionary<VantageStreetsWidth, double> CenterlineDistances => new Dictionary<VantageStreetsWidth, double> {
             {VantageStreetsWidth._60ft, Units.FeetToMeters(60.0)},
             {VantageStreetsWidth._75ft, Units.FeetToMeters(80.0)},
