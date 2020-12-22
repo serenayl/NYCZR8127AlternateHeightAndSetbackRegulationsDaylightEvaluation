@@ -18,13 +18,13 @@ using Polygon = Elements.Geometry.Polygon;
 
 namespace Elements
 {
-#pragma warning disable // Disable all warnings
+    #pragma warning disable // Disable all warnings
 
     /// <summary>An element that contains an SVG Graphic</summary>
     [Newtonsoft.Json.JsonConverter(typeof(Elements.Serialization.JSON.JsonInheritanceConverter), "discriminator")]
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "10.1.21.0 (Newtonsoft.Json v12.0.0.0)")]
     [UserElement]
-    public partial class SVGGraphic : Element
+	public partial class SVGGraphic : Element
     {
         [Newtonsoft.Json.JsonConstructor]
         public SVGGraphic(string @content, System.Guid @id, string @name)
@@ -32,23 +32,23 @@ namespace Elements
         {
             var validator = Validator.Instance.GetFirstValidatorForType<SVGGraphic>
             ();
-            if (validator != null)
+            if(validator != null)
             {
-                validator.PreConstruct(new object[] { @content, @id, @name });
+                validator.PreConstruct(new object[]{ @content, @id, @name});
             }
-
-            this.Content = @content;
-
-            if (validator != null)
+        
+                this.Content = @content;
+            
+            if(validator != null)
             {
-                validator.PostConstruct(this);
+            validator.PostConstruct(this);
             }
-        }
-
+            }
+    
         /// <summary>The raw SVG content</summary>
         [Newtonsoft.Json.JsonProperty("Content", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Content { get; set; }
-
-
+    
+    
     }
 }
