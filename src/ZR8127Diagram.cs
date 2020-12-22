@@ -650,10 +650,8 @@ namespace NYCZR8127DaylightEvaluation
                 "support-result"
             );
 
-            var legendSize = 30;
+            var legendSize = 20;
             this.drawLegend(new Vector3(90 - legendSize, resultStartPoint.Y - legendSize), legendSize);
-
-            // this.drawLegend(new Vector3(45, 140), 10);
 
             var svgString = this.svg.SvgString();
 
