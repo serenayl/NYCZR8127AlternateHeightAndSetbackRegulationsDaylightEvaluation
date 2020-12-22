@@ -16,9 +16,6 @@ namespace NYCZR8127DaylightEvaluation
         public Dictionary<long, List<long>> Lines = new Dictionary<long, List<long>>();
         public List<List<Elements.Geometry.Solids.HalfEdge>> Surfaces = new List<List<Elements.Geometry.Solids.HalfEdge>>();
 
-        // TODO: delete when we don't need to debug anymore
-        public static Model Model = null;
-
         public SolidAnalysisObject(Elements.Geometry.Solids.SolidOperation solid, Transform transform)
         {
             var solidTransform = solid.LocalTransform;
@@ -41,8 +38,6 @@ namespace NYCZR8127DaylightEvaluation
                 {
                     var dist = start.DistanceTo(end);
                     var line = new Line(start, end);
-
-                    Model.AddElement(new ModelCurve(line));
 
                     if (!SkipSubdivide && dist > DivisionLength && (start.X != end.X || start.Y != end.Y))
                     {

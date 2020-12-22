@@ -49,7 +49,6 @@ namespace NYCZR8127DaylightEvaluation
                 throw new ArgumentException("There were no envelopes found. Please make sure you either meet the dependency of 'Envelope' or the dependency of 'EnvelopeAndSite.");
             }
 
-            SolidAnalysisObject.Model = model;
             SolidAnalysisObject.SkipSubdivide = input.SkipSubdivide;
 
             var analysisObjects = SolidAnalysisObject.MakeFromEnvelopes(envelopes);
@@ -108,8 +107,6 @@ namespace NYCZR8127DaylightEvaluation
 
                 vsIndex += 1;
             }
-
-            // TODO: sum up all vantage streets and normalize by street length. This must be more than 75, or 66 if E Midtown
 
             var lowestStreetScore = new List<double>(streetScores).OrderBy(score => score).ToList()[0];
             var overallScore = streetScoresTimesLengths / streetLengths;
