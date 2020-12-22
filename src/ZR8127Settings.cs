@@ -12,73 +12,25 @@ namespace NYCZR8127DaylightEvaluation
             BuildingEdges = 1,
             GridlinesMajor = 10,
             GridlinesMinor = 11,
-            GridlinesIrrelevant = 12,
-            DaylightBoundaries = 13,
-            ProfileCurves = 14,
+            DaylightBoundaries = 12,
+            ProfileCurves = 13,
             BlockedDaylight = 20,
             ProfileEncroachment = 21,
             UnblockedCredit = 22,
         }
-        public static Dictionary<MaterialPalette, Material> Materials => new Dictionary<MaterialPalette, Material> {
-            {
-                MaterialPalette.Silhouette,
-                new Material(
-                    "silhouette",
-                    new Color(Colors.Darkgray.Red, Colors.Darkgray.Green, Colors.Darkgray.Blue, 0.5),
-                    doubleSided:true
-                )
-            },
-            {
-                MaterialPalette.BuildingEdges,
-                new Material("building edge", Colors.Black)
-            },
-            {
-                MaterialPalette.GridlinesMajor,
-                new Material("major gridline", Colors.Darkgray)
-            },
-            {
-                MaterialPalette.GridlinesMinor,
-                new Material( "minor gridline", Colors.Gray)
-            },
-            {
-                MaterialPalette.GridlinesIrrelevant,
-                new Material( "irrelevant gridline", Colors.Gray)
-            },
-            {
-                MaterialPalette.DaylightBoundaries,
-                new Material( "daylight boundary", Colors.Magenta)
-            },
-            {
-                MaterialPalette.ProfileCurves,
-                new Material( "profile curve", Colors.Red)
-            },
-            {
-                MaterialPalette.BlockedDaylight,
-                new Material( "blocked daylight", new Color(1,0,0,0.3))
-            },
-            {
-                MaterialPalette.ProfileEncroachment,
-                new Material( "profile encroachment", Colors.Red)
-            },
-            {
-                MaterialPalette.UnblockedCredit,
-                new Material( "unblocked credit", new Color(0,1,0,0.3))
-            }
-        };
 
-        private static Color transparentColor = new Color(0, 0, 0, 0);
+        public static Color TransparentColor = new Color(0, 0, 0, 0);
 
         public static Dictionary<MaterialPalette, SVG.Style> SvgStyles => new Dictionary<MaterialPalette, SVG.Style> {
-            {MaterialPalette.Silhouette, new SVG.Style()},
-            {MaterialPalette.BuildingEdges, new SVG.Style()},
-            {MaterialPalette.GridlinesMajor, new SVG.Style(strokeWidth:0.1, enableFill: false, enableStroke: true, stroke: Colors.Black, fill: transparentColor)},
-            {MaterialPalette.GridlinesMinor, new SVG.Style(strokeWidth:0.05, enableFill: false, enableStroke: true, stroke: Colors.Gray, fill: transparentColor)},
-            {MaterialPalette.GridlinesIrrelevant, new SVG.Style()},
-            {MaterialPalette.DaylightBoundaries, new SVG.Style()},
-            {MaterialPalette.ProfileCurves, new SVG.Style()},
-            {MaterialPalette.BlockedDaylight, new SVG.Style()},
-            {MaterialPalette.ProfileEncroachment, new SVG.Style()},
-            {MaterialPalette.UnblockedCredit, new SVG.Style()}
+            {MaterialPalette.Silhouette, new SVG.Style(strokeWidth:1, enableFill: true, enableStroke: true, stroke: Colors.Black, fill: new Color(0, 0, 0, 0.2))},
+            {MaterialPalette.BuildingEdges, new SVG.Style(strokeWidth:0.2, enableFill: false, enableStroke: true, stroke: Colors.Black, fill: TransparentColor)},
+            {MaterialPalette.GridlinesMajor, new SVG.Style(strokeWidth:0.1, enableFill: false, enableStroke: true, stroke: Colors.Black, fill: TransparentColor)},
+            {MaterialPalette.GridlinesMinor, new SVG.Style(strokeWidth:0.05, enableFill: false, enableStroke: true, stroke: Colors.Gray, fill: TransparentColor)},
+            {MaterialPalette.DaylightBoundaries, new SVG.Style(strokeWidth:0.5, enableFill: false, enableStroke: true, stroke: Colors.Magenta, fill: TransparentColor)},
+            {MaterialPalette.ProfileCurves, new SVG.Style(strokeWidth:0.5, enableFill: false, enableStroke: true, stroke: Colors.Red, fill: TransparentColor)},
+            {MaterialPalette.BlockedDaylight, new SVG.Style(strokeWidth:0, enableFill: true, enableStroke: false, stroke: TransparentColor, fill: new Color(1, 0.75, 0, 0.75))},
+            {MaterialPalette.ProfileEncroachment, new SVG.Style(strokeWidth:0, enableFill: true, enableStroke: false, stroke: TransparentColor, fill: new Color(1, 0, 0, 0.75))},
+            {MaterialPalette.UnblockedCredit, new SVG.Style(strokeWidth:0, enableFill: true, enableStroke: false, stroke: TransparentColor, fill: new Color(0, 1, 0, 0.75))}
         };
 
         public static Dictionary<VantageStreetsWidth, double> CenterlineDistances => new Dictionary<VantageStreetsWidth, double> {

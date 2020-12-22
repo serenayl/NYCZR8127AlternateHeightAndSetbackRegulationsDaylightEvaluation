@@ -85,9 +85,10 @@ namespace NYCZR8127DaylightEvaluation
                 foreach (var vp in vantagePoints)
                 {
                     var transform = new Transform(new Vector3(90.0 + vpIndex * 200.0, site.Max.Y + margin + verticalOffsetBase * vsIndex));
-                    vp.Diagram.Draw(model, analysisObjects, input, transform, input.DebugVisualization, analysisObjectsForBlockage: analysisObjectsForBlockage);
 
                     var name = $"{vantageStreet.Name}: VP {vpIndex + 1}";
+
+                    vp.Diagram.Draw(name, model, analysisObjects, input, input.DebugVisualization, analysisObjectsForBlockage: analysisObjectsForBlockage);
 
                     var outputVp = new DaylightEvaluationVantagePoint(vp.Point, vp.Diagram.DaylightBlockage, vp.Diagram.UnblockedDaylightCredit, vp.Diagram.ProfilePenalty, vp.Diagram.AvailableDaylight, vp.Diagram.DaylightRemaining, vp.Diagram.DaylightScore, Guid.NewGuid(), name);
                     model.AddElement(outputVp);

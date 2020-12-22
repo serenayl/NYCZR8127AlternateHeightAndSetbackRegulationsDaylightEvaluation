@@ -25,6 +25,7 @@ namespace NYCZR8127DaylightEvaluation
         public Vector3 FrontDirection;
 
         public double CenterlineOffsetDist;
+        public Polyline Centerline;
         public Line NearLotLine;
         public Line FarLotLine;
         public Line FrontLotLine;
@@ -62,6 +63,10 @@ namespace NYCZR8127DaylightEvaluation
 
             this.FrontLotLine = lotLinesByDistToStreet[0];
             this.RearLotLine = lotLinesByDistToStreet[3];
+
+            var move = -1 * this.FrontDirection * centerlineOffsetDist;
+            var points = new List<Vector3>() { this.FrontLotLine.Start + move, this.FrontLotLine.End + move };
+            this.Centerline = new Polyline(points);
 
             var nearFarLines = new List<Line>() { lotLinesByDistToStreet[1], lotLinesByDistToStreet[2] }.OrderBy(line => this.Point.DistanceTo(line)).ToList();
             this.NearLotLine = nearFarLines[0];
