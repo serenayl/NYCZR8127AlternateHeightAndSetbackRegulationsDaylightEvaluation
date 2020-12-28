@@ -231,7 +231,7 @@ namespace NYCZR8127DaylightEvaluation
             {
                 var coordinates = rawProfileCurve.Vertices.Select(pt => this.vp.GetAnalysisPoint(pt.X, pt.Y, useRawAngles).DrawCoordinate).ToArray();
                 var polyline = new Polyline(coordinates);
-                // this.svg.AddGeometry(polyline, profileCurveStyle);
+                this.svg.AddGeometry(polyline, profileCurveStyle);
             }
 
             // Draw ticks

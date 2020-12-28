@@ -27,7 +27,7 @@ namespace NYCZR8127DaylightEvaluation
             {MaterialPalette.GridlinesMajor, new SVG.Style(strokeWidth:0.1, enableFill: false, enableStroke: true, stroke: Colors.Black, fill: TransparentColor)},
             {MaterialPalette.GridlinesMinor, new SVG.Style(strokeWidth:0.05, enableFill: false, enableStroke: true, stroke: Colors.Gray, fill: TransparentColor)},
             {MaterialPalette.DaylightBoundaries, new SVG.Style(strokeWidth:0.5, enableFill: false, enableStroke: true, stroke: Colors.Magenta, fill: TransparentColor)},
-            {MaterialPalette.ProfileCurves, new SVG.Style(strokeWidth:0.5, enableFill: false, enableStroke: true, stroke: Colors.Red, fill: TransparentColor)},
+            {MaterialPalette.ProfileCurves, new SVG.Style(strokeWidth:0.2, enableFill: false, enableStroke: true, stroke: Colors.Red, fill: TransparentColor)},
             {MaterialPalette.BlockedDaylight, new SVG.Style(strokeWidth:0, enableFill: true, enableStroke: false, stroke: TransparentColor, fill: new Color(1, 0.75, 0, 0.75))},
             {MaterialPalette.ProfileEncroachment, new SVG.Style(strokeWidth:0, enableFill: true, enableStroke: false, stroke: TransparentColor, fill: new Color(1, 0, 0, 0.75))},
             {MaterialPalette.UnblockedCredit, new SVG.Style(strokeWidth:0, enableFill: true, enableStroke: false, stroke: TransparentColor, fill: new Color(0, 1, 0, 0.75))}
