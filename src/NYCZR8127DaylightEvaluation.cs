@@ -19,26 +19,11 @@ namespace NYCZR8127DaylightEvaluation
         {
             var model = new Model();
 
-            Site siteInput = null;
-            List<Envelope> envelopes = null;
+            inputModels.TryGetValue("Site", out var siteModel);
+            inputModels.TryGetValue("Envelope", out var envelopeModel);
 
-            inputModels.TryGetValue("EnvelopeAndSite", out var envelopeAndSite);
-
-            if (envelopeAndSite == null)
-            {
-                Console.WriteLine("Using separate Envelope and Site dependencies");
-                inputModels.TryGetValue("Site", out var siteModel);
-                inputModels.TryGetValue("Envelope", out var envelopeModel);
-
-                siteInput = getSite(inputModels, siteModel);
-                envelopes = getEnvelopes(inputModels, envelopeModel);
-            }
-            else
-            {
-                Console.WriteLine("Using combo EnvelopeAndSite");
-                siteInput = getSite(inputModels, envelopeAndSite);
-                envelopes = getEnvelopes(inputModels, envelopeAndSite);
-            }
+            var siteInput = getSite(inputModels, siteModel);
+            var envelopes = getEnvelopes(inputModels, envelopeModel);
 
             if (siteInput == null)
             {

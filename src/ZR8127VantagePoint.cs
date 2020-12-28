@@ -48,7 +48,7 @@ namespace NYCZR8127DaylightEvaluation
             Vector3 point,
             Vector3 startDirection,
             Vector3 ninetyDegreeDirection,
-            List<Line> lotLinesByDistToStreet,
+            List<Line> lotLines,
             double centerlineOffsetDist = 0.0
         )
         {
@@ -61,14 +61,17 @@ namespace NYCZR8127DaylightEvaluation
             this.sPlane = new Plane(point, ninetyDegreeDirection);
             this.dPlane = new Plane(point, startDirection * -1);
 
-            this.FrontLotLine = lotLinesByDistToStreet[0];
-            this.RearLotLine = lotLinesByDistToStreet[3];
+            var lotLinesBySDist = new List<Line>(lotLines).OrderBy(line => this.GetS(line.PointAt(0.5))).ToList();
+
+            this.FrontLotLine = lotLinesBySDist[0];
+            this.RearLotLine = lotLinesBySDist[3];
 
             var move = -1 * this.FrontDirection * centerlineOffsetDist;
             var points = new List<Vector3>() { this.FrontLotLine.Start + move, this.FrontLotLine.End + move };
             this.Centerline = new Polyline(points);
 
-            var nearFarLines = new List<Line>() { lotLinesByDistToStreet[1], lotLinesByDistToStreet[2] }.OrderBy(line => this.Point.DistanceTo(line)).ToList();
+            var nearFarLines = new List<Line>() { lotLinesBySDist[1], lotLinesBySDist[2] }.OrderBy(line => Math.Abs(this.GetD(line.PointAt(0.5)))).ToList();
+
             this.NearLotLine = nearFarLines[0];
             this.FarLotLine = nearFarLines[1];
 
@@ -141,7 +144,7 @@ namespace NYCZR8127DaylightEvaluation
             }
             var siteCentroid = rectangularSite.Centroid();
             var midpoint = vantageStreet.Line.PointAt(0.5);
-            var lotLines = new List<Line>(rectangularSite.Segments()).OrderBy(segment => midpoint.DistanceTo(segment)).ToList();
+            var lotLines = new List<Line>(rectangularSite.Segments()).OrderBy(segment => midpoint.DistanceTo(segment.PointAt(0.5))).ToList();
             var frontLotLine = lotLines[0];
             var centerlineOffsetDist = Settings.CenterlineDistances[vantageStreet.Width] / 2;
             var directionToStreet = new Vector3(frontLotLine.PointAt(0.5) - siteCentroid).Unitized() * centerlineOffsetDist;
@@ -235,7 +238,7 @@ namespace NYCZR8127DaylightEvaluation
             {
                 foreach (var vp in orderedStreetVantagePts)
                 {
-                    var nearPointOnNearLot = new List<Vector3>() { vp.NearLotLine.Start, vp.NearLotLine.End }.OrderBy(pt => pt.DistanceTo(vp.FrontLotLine)).ToList()[0];
+                    var nearPointOnNearLot = new List<Vector3>() { vp.NearLotLine.Start, vp.NearLotLine.End }.OrderBy(pt => pt.DistanceTo(vp.Point)).ToList()[0];
                     // Move intersection point of the near lot line and front lot line
                     // towards the rear, to the lesser of 100' or the centerline of the block from the front lot line
                     var pointForBounds = nearPointOnNearLot + vp.FrontDirection * Math.Min(Units.FeetToMeters(100), Units.FeetToMeters(vantageStreet.BlockDepthInFeet / 2));
