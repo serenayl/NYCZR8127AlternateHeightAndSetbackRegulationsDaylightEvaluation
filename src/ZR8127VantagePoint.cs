@@ -59,7 +59,15 @@ namespace NYCZR8127DaylightEvaluation
             this.CenterlineOffsetDist = centerlineOffsetDist;
 
             this.sPlane = new Plane(point, ninetyDegreeDirection);
-            this.dPlane = new Plane(point, startDirection * -1);
+
+            if (startDirection.PlaneAngleTo(ninetyDegreeDirection) == 90)
+            {
+                this.dPlane = new Plane(point, startDirection);
+            }
+            else
+            {
+                this.dPlane = new Plane(point, startDirection * -1);
+            }
 
             var lotLinesBySDist = new List<Line>(lotLines).OrderBy(line => this.GetS(line.PointAt(0.5))).ToList();
 
