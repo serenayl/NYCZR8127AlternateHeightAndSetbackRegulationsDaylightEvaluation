@@ -17,15 +17,16 @@ namespace NYCZR8127DaylightEvaluation
         /// <summary>Calculated projection factor for section lines</summary>
         private static double projectionFactor = Settings.ChartHeight / rawProjectionAt90Deg;
 
-        private static SVG.Style majorLinesStyle = Settings.SvgStyles[Settings.MaterialPalette.GridlinesMajor];
-        private static SVG.Style minorLinesStyle = Settings.SvgStyles[Settings.MaterialPalette.GridlinesMinor];
-        private static SVG.Style daylightBoundariesStyle = Settings.SvgStyles[Settings.MaterialPalette.DaylightBoundaries];
-        private static SVG.Style profileCurveStyle = Settings.SvgStyles[Settings.MaterialPalette.ProfileCurves];
-        private static SVG.Style daylightBlockageStyle = Settings.SvgStyles[Settings.MaterialPalette.BlockedDaylight];
-        private static SVG.Style profileEncroachmentStyle = Settings.SvgStyles[Settings.MaterialPalette.ProfileEncroachment];
-        private static SVG.Style unblockedCreditStyle = Settings.SvgStyles[Settings.MaterialPalette.UnblockedCredit];
-
-        private static SVG.Style invisibleStyle = new SVG.Style(0, false, false, Settings.TransparentColor, Settings.TransparentColor);
+        private static (string, SVG.Style) buildingEdges = ("building-edges", Settings.SvgStyles[Settings.MaterialPalette.BuildingEdges]);
+        private static (string, SVG.Style) buildingSilhouette = ("building-silhouette", Settings.SvgStyles[Settings.MaterialPalette.Silhouette]);
+        private static (string, SVG.Style) daylightBlockageStyle = ("daylight-blockage", Settings.SvgStyles[Settings.MaterialPalette.BlockedDaylight]);
+        private static (string, SVG.Style) daylightBoundariesStyle = ("daylight-boundaries", Settings.SvgStyles[Settings.MaterialPalette.DaylightBoundaries]);
+        private static (string, SVG.Style) invisibleStyle = ("invisible", new SVG.Style(fill: new Color(0, 0, 0, 0)));
+        private static (string, SVG.Style) majorLinesStyle = ("major-lines", Settings.SvgStyles[Settings.MaterialPalette.GridlinesMajor]);
+        private static (string, SVG.Style) minorLinesStyle = ("minor-linse", Settings.SvgStyles[Settings.MaterialPalette.GridlinesMinor]);
+        private static (string, SVG.Style) profileCurveStyle = ("profile-curves", Settings.SvgStyles[Settings.MaterialPalette.ProfileCurves]);
+        private static (string, SVG.Style) profileEncroachmentStyle = ("profile-encroachment", Settings.SvgStyles[Settings.MaterialPalette.ProfileEncroachment]);
+        private static (string, SVG.Style) unblockedCreditStyle = ("unblocked-credit", Settings.SvgStyles[Settings.MaterialPalette.UnblockedCredit]);
 
         private static Grid1d sectionGrid1d = makeSectionGrid();
         #endregion PrivateStatics
@@ -47,6 +48,42 @@ namespace NYCZR8127DaylightEvaluation
         public double AvailableDaylight;
         public double DaylightRemaining;
         public double DaylightScore;
+
+        /// <summary>
+        /// A diagram from a vantage point.
+        /// Figures out grids and subgrids and profile curves and how to draw your building.
+        /// </summary>
+        public Diagram(VantagePoint vp)
+        {
+            this.vp = vp;
+            this.basePlanGrid = this.makePlanGrid(vp.CenterlineOffsetDist);
+
+            this.svg.AddStyle("text", new SVG.Style(fontFamily: "Roboto, sans-serif", fill: Colors.Black));
+
+            this.svg.AddStyle("text.label", new SVG.Style(
+                fontSize: "3px"
+            ));
+
+            this.svg.AddStyle("text.result", new SVG.Style(
+                fontSize: "6px"
+            ));
+
+            this.svg.AddStyle("text.support-result", new SVG.Style(
+                fontSize: "4px",
+                fill: Colors.Gray
+            ));
+
+            this.svg.AddStyle($"path.{buildingEdges.Item1}", buildingEdges.Item2);
+            this.svg.AddStyle($"path.{buildingSilhouette.Item1}", buildingSilhouette.Item2);
+            this.svg.AddStyle($"path.{daylightBlockageStyle.Item1}", daylightBlockageStyle.Item2);
+            this.svg.AddStyle($"path.{daylightBoundariesStyle.Item1}", daylightBoundariesStyle.Item2);
+            this.svg.AddStyle($"path.{invisibleStyle.Item1}", invisibleStyle.Item2);
+            this.svg.AddStyle($"path.{majorLinesStyle.Item1}", majorLinesStyle.Item2);
+            this.svg.AddStyle($"path.{minorLinesStyle.Item1}", minorLinesStyle.Item2);
+            this.svg.AddStyle($"path.{profileCurveStyle.Item1}", profileCurveStyle.Item2);
+            this.svg.AddStyle($"path.{profileEncroachmentStyle.Item1}", profileEncroachmentStyle.Item2);
+            this.svg.AddStyle($"path.{unblockedCreditStyle.Item1}", unblockedCreditStyle.Item2);
+        }
 
         #region PrivateUtils
         /// <summary>
@@ -136,7 +173,7 @@ namespace NYCZR8127DaylightEvaluation
         /// <summary>
         /// Draw a section grid line (the curvy horizontal ones, or straight if we're using raw angles)
         /// </summary>
-        private Polyline drawSectionGridline(double sectionAngle, SVG.Style style, Boolean useRawAngles = false)
+        private Polyline drawSectionGridline(double sectionAngle, string classes, Boolean useRawAngles = false)
         {
             var coordinates = new List<Vector3>();
 
@@ -147,7 +184,7 @@ namespace NYCZR8127DaylightEvaluation
 
             var polyline = new Polyline(coordinates);
 
-            this.svg.AddGeometry(polyline, style);
+            this.svg.AddGeometry(polyline, classes);
 
             return polyline;
         }
@@ -155,10 +192,10 @@ namespace NYCZR8127DaylightEvaluation
         /// <summary>
         /// Draw a plan grid line (the straight vertical ones)
         /// </summary>
-        private Polyline drawPlanGridline(double planAngle, SVG.Style style, double yTop)
+        private Polyline drawPlanGridline(double planAngle, string classes, double yTop)
         {
             var line = new Polyline(new List<Vector3>() { new Vector3(planAngle, 0.0), new Vector3(planAngle, yTop) });
-            this.svg.AddGeometry(line, style);
+            this.svg.AddGeometry(line, classes);
             return line;
         }
 
@@ -174,12 +211,7 @@ namespace NYCZR8127DaylightEvaluation
             var bottomLeft = new Vector3(-95, -10);
             var topRight = new Vector3(95, yTop + 50);
             var marginRect = Polygon.Rectangle(bottomLeft, topRight);
-            this.svg.AddGeometry(marginRect, Diagram.invisibleStyle);
-
-            this.svg.AddCss("text.label", new List<(string, string)>(){
-                ("font-size", "3px"),
-                ("font-family", "Roboto, sans-serif"),
-            });
+            this.svg.AddGeometry(marginRect, Diagram.invisibleStyle.Item1);
 
             // Draw horizontal lines
             foreach (var aboveBelow in Diagram.sectionGrid1d.Cells)
@@ -188,35 +220,35 @@ namespace NYCZR8127DaylightEvaluation
                 {
                     if (cell.Domain.Min > 0)
                     {
-                        this.drawSectionGridline(cell.Domain.Min, Diagram.majorLinesStyle, useRawAngles);
+                        this.drawSectionGridline(cell.Domain.Min, Diagram.majorLinesStyle.Item1, useRawAngles);
                         this.svg.AddText(this.vp.GetAnalysisPoint(0, cell.Domain.Min).DrawCoordinate, cell.Domain.Min.ToString(), "label", "middle");
                     }
 
                     foreach (var subcell in cell.Cells.SkipLast(1))
                     {
-                        this.drawSectionGridline(subcell.Domain.Max, minorLinesStyle, useRawAngles);
+                        this.drawSectionGridline(subcell.Domain.Max, minorLinesStyle.Item1, useRawAngles);
                     }
                 }
             }
 
             // Draw grid
             var gridRect = Polygon.Rectangle(new Vector3(-90, 0), new Vector3(90, yTop));
-            this.svg.AddGeometry(gridRect, Diagram.majorLinesStyle);
+            this.svg.AddGeometry(gridRect, Diagram.majorLinesStyle.Item1);
 
             foreach (var cell in this.basePlanGrid.Cells)
             {
-                this.drawPlanGridline(cell.Domain.Min, Diagram.majorLinesStyle, yTop);
+                this.drawPlanGridline(cell.Domain.Min, Diagram.majorLinesStyle.Item1, yTop);
 
                 if (cell.Cells != null)
                 {
                     foreach (var subcell in cell.Cells.SkipLast(1))
                     {
-                        this.drawPlanGridline(subcell.Domain.Max, minorLinesStyle, yTop);
+                        this.drawPlanGridline(subcell.Domain.Max, minorLinesStyle.Item1, yTop);
                     }
                 }
             }
             // Last major plan gridline
-            this.drawPlanGridline(this.basePlanGrid.Cells.Last().Domain.Max, Diagram.majorLinesStyle, yTop);
+            // this.drawPlanGridline(this.basePlanGrid.Cells.Last().Domain.Max, Diagram.majorLinesStyle, yTop);
 
             foreach (double planAngle in new List<double>() { vp.DaylightBoundaries.Min, vp.DaylightBoundaries.Max })
             {
@@ -224,14 +256,14 @@ namespace NYCZR8127DaylightEvaluation
                     new Vector3(planAngle, 0.0),
                     new Vector3(planAngle, yTop)
                 });
-                this.svg.AddGeometry(boundary, daylightBoundariesStyle);
+                this.svg.AddGeometry(boundary, daylightBoundariesStyle.Item1);
             }
 
             foreach (var rawProfileCurve in this.ProfileCurves)
             {
                 var coordinates = rawProfileCurve.Vertices.Select(pt => this.vp.GetAnalysisPoint(pt.X, pt.Y, useRawAngles).DrawCoordinate).ToArray();
                 var polyline = new Polyline(coordinates);
-                this.svg.AddGeometry(polyline, profileCurveStyle);
+                this.svg.AddGeometry(polyline, profileCurveStyle.Item1);
             }
 
             // Draw ticks
@@ -249,8 +281,8 @@ namespace NYCZR8127DaylightEvaluation
                 };
                 var topTick = new Polyline(topTickVertices);
                 var bottomTick = new Polyline(bottomTickVertices);
-                this.svg.AddGeometry(topTick, Diagram.majorLinesStyle);
-                this.svg.AddGeometry(bottomTick, Diagram.majorLinesStyle);
+                this.svg.AddGeometry(topTick, Diagram.majorLinesStyle.Item1);
+                this.svg.AddGeometry(bottomTick, Diagram.majorLinesStyle.Item1);
                 if (isPrimary)
                 {
                     var tickValue = i < 0 ? 90 + i : 90 - i;
@@ -548,16 +580,6 @@ namespace NYCZR8127DaylightEvaluation
         #endregion PublicStatics
 
         /// <summary>
-        /// A diagram from a vantage point.
-        /// Figures out grids and subgrids and profile curves and how to draw your building.
-        /// </summary>
-        public Diagram(VantagePoint vp)
-        {
-            this.vp = vp;
-            this.basePlanGrid = this.makePlanGrid(vp.CenterlineOffsetDist);
-        }
-
-        /// <summary>
         /// Calculates profile curves. Required to be called manually
         /// after a vantage point's daylight boundaries have been calculated.
         /// Makes both sides of profile curves, but only adds the ones that intersect
@@ -593,20 +615,18 @@ namespace NYCZR8127DaylightEvaluation
             this.DaylightRemaining = this.DaylightBlockage + this.UnblockedDaylightCredit + this.ProfilePenalty + this.AvailableDaylight;
             this.DaylightScore = this.DaylightRemaining / this.AvailableDaylight * 100;
 
-            this.drawSquares(blockedDaylightSubsquares, Diagram.daylightBlockageStyle, useRawAngles);
-            this.drawSquares(unblockedSubsquares, Diagram.unblockedCreditStyle, useRawAngles);
-            this.drawSquares(penaltySubsquares, Diagram.profileEncroachmentStyle, useRawAngles);
-
-            var edgeStyle = Settings.SvgStyles[Settings.MaterialPalette.BuildingEdges];
+            this.drawSquares(blockedDaylightSubsquares, Diagram.daylightBlockageStyle.Item1, useRawAngles);
+            this.drawSquares(unblockedSubsquares, Diagram.unblockedCreditStyle.Item1, useRawAngles);
+            this.drawSquares(penaltySubsquares, Diagram.profileEncroachmentStyle.Item1, useRawAngles);
 
             foreach (var polyline in drawPolylines)
             {
-                this.svg.AddGeometry(polyline, edgeStyle);
+                this.svg.AddGeometry(polyline, buildingEdges.Item1);
             }
 
             foreach (var silhouette in drawSilhouettes)
             {
-                this.svg.AddGeometry(silhouette, Settings.SvgStyles[Settings.MaterialPalette.Silhouette]);
+                this.svg.AddGeometry(silhouette, buildingSilhouette.Item1);
             }
 
             Console.WriteLine("--- ANALYSIS ---");
@@ -616,17 +636,6 @@ namespace NYCZR8127DaylightEvaluation
             Console.WriteLine($"- Available daylight: {this.AvailableDaylight}");
             Console.WriteLine($"- Remaining daylight: {this.DaylightRemaining}");
             Console.WriteLine($"- Daylight score: {this.DaylightScore}");
-
-            this.svg.AddCss("text.result", new List<(string, string)>(){
-                ("font-size", "6px"),
-                ("font-family", "Roboto, sans-serif"),
-            });
-
-            this.svg.AddCss("text.support-result", new List<(string, string)>(){
-                ("font-size", "4px"),
-                ("font-family", "Roboto, sans-serif"),
-                ("fill", "#666")
-            });
 
             this.svg.AddText(resultStartPoint, $"Score: {Math.Truncate(this.DaylightScore * 100) / 100}", "result");
             this.svg.AddText(
@@ -654,8 +663,6 @@ namespace NYCZR8127DaylightEvaluation
             this.drawLegend(new Vector3(90 - legendSize, resultStartPoint.Y - legendSize), legendSize);
 
             var svgString = this.svg.SvgString();
-
-            // Console.WriteLine(svgString);
 
             model.AddElement(new SVGGraphic(svgString, Guid.NewGuid(), name));
         }
@@ -686,31 +693,31 @@ namespace NYCZR8127DaylightEvaluation
                 this.svg.AddGeometry(new Polyline(new List<Vector3>(){
                     (line.Start - boundaries.Min) * factor + startPoint,
                     (line.End - boundaries.Min) * factor + startPoint
-                }), majorLinesStyle);
+                }), majorLinesStyle.Item1);
             }
 
             this.svg.AddGeometry(new Polyline(new List<Vector3>(){
                 (this.vp.Centerline.PointAt(0) - boundaries.Min) * factor + startPoint,
                 (this.vp.Centerline.PointAt(1) - boundaries.Min) * factor + startPoint
-            }), majorLinesStyle);
+            }), majorLinesStyle.Item1);
 
             this.svg.AddGeometry(new Polyline(new List<Vector3>(){
                 (this.vp.DaylightBoundariesPoints[0] - boundaries.Min) * factor + startPoint,
                 (this.vp.Point - boundaries.Min) * factor + startPoint,
                 (this.vp.DaylightBoundariesPoints[1] - boundaries.Min) * factor + startPoint
-            }), daylightBlockageStyle);
+            }), daylightBlockageStyle.Item1);
 
-            this.svg.AddGeometry(new Circle((this.vp.Point - boundaries.Min) * factor + startPoint, 1.0).ToPolygon(), majorLinesStyle);
+            this.svg.AddGeometry(new Circle((this.vp.Point - boundaries.Min) * factor + startPoint, 0.2).ToPolygon(), buildingSilhouette.Item1);
 
         }
 
-        private void drawSquares(List<Square> subSqures, SVG.Style style, Boolean useRawAngles = false)
+        private void drawSquares(List<Square> subSqures, string classes, Boolean useRawAngles = false)
         {
             foreach (var subSquare in subSqures)
             {
                 var coordinates = subSquare.Polygon.Vertices.Select(pt => this.vp.GetAnalysisPoint(pt.X, pt.Y, useRawAngles).DrawCoordinate).ToArray();
                 var polygon = new Polygon(coordinates);
-                this.svg.AddGeometry(polygon, style);
+                this.svg.AddGeometry(polygon, classes);
             }
         }
 
