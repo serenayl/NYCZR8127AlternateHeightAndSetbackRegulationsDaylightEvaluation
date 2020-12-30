@@ -58,7 +58,7 @@
           ],
           "properties": {
             "Line": {
-              "description": "A line representing your vantage street, touching the lot line.",
+              "description": "A line representing a rough approximation of the centerline of your vantage street. It does not need to be parallel or exact. The function will automatically use the midpoint of your drawn line to find the nearest lot line and designate that as the front lot line.",
               "$ref": "https://hypar.io/Schemas/Geometry/Line.json"
             },
             "Block Depth In Feet": {
