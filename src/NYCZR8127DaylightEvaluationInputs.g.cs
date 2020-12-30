@@ -95,7 +95,7 @@ namespace NYCZR8127DaylightEvaluation
             }
         }
     
-        /// <summary>A line representing your vantage street, touching the lot line.</summary>
+        /// <summary>A line representing a rough approximation of the centerline of your vantage street. It does not need to be parallel or exact. The function will automatically use the midpoint of your drawn line to find the nearest lot line and designate that as the front lot line.</summary>
         [Newtonsoft.Json.JsonProperty("Line", Required = Newtonsoft.Json.Required.AllowNull)]
         public Line Line { get; set; }
     
