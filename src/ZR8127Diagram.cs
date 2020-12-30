@@ -221,7 +221,7 @@ namespace NYCZR8127DaylightEvaluation
                     if (cell.Domain.Min > 0)
                     {
                         this.drawSectionGridline(cell.Domain.Min, Diagram.majorLinesStyle.Item1, useRawAngles);
-                        this.svg.AddText(this.vp.GetAnalysisPoint(0, cell.Domain.Min).DrawCoordinate, cell.Domain.Min.ToString(), "label", "middle");
+                        this.svg.AddText(this.vp.GetAnalysisPoint(0, cell.Domain.Min, useRawAngles).DrawCoordinate, cell.Domain.Min.ToString(), "label", "middle");
                     }
 
                     foreach (var subcell in cell.Cells.SkipLast(1))
