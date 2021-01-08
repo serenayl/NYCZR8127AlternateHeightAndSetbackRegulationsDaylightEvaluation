@@ -58,7 +58,7 @@ namespace NYCZR8127DaylightEvaluation
             this.vp = vp;
             this.basePlanGrid = this.makePlanGrid(vp.CenterlineOffsetDist);
 
-            this.svg.AddStyle("text", new SVG.Style(fontFamily: "Roboto, sans-serif", fill: Colors.Black));
+            this.svg.AddStyle("text", new SVG.Style(fontFamily: "Roboto,Helvetica,Arial,sans-serif", fill: Colors.Black));
 
             this.svg.AddStyle("text.label", new SVG.Style(
                 fontSize: "3px"
@@ -346,7 +346,6 @@ namespace NYCZR8127DaylightEvaluation
 
         private void makeSquares()
         {
-            // this.PlanSquares = new List<PlanSquare>();
             var planId = 1.0;
             var planIdx = 0;
 
