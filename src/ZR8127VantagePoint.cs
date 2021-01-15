@@ -25,11 +25,11 @@ namespace NYCZR8127DaylightEvaluation
         public Vector3 FrontDirection;
 
         public double CenterlineOffsetDist;
+        public Polyline Centerline;
         public Line NearLotLine;
         public Line FarLotLine;
         public Line FrontLotLine;
         public Line RearLotLine;
-        public Polyline Centerline;
 
         public Domain1d DaylightBoundaries;
         public List<Vector3> DaylightBoundariesPoints = new List<Vector3>() { new Vector3(), new Vector3() };
@@ -79,6 +79,7 @@ namespace NYCZR8127DaylightEvaluation
             this.Centerline = new Polyline(points);
 
             var nearFarLines = new List<Line>() { lotLinesBySDist[1], lotLinesBySDist[2] }.OrderBy(line => Math.Abs(this.GetD(line.PointAt(0.5)))).ToList();
+
             this.NearLotLine = nearFarLines[0];
             this.FarLotLine = nearFarLines[1];
 

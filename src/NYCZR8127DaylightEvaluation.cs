@@ -3,6 +3,7 @@ using Elements.Geometry;
 using System.Collections.Generic;
 using System;
 using System.Linq;
+using System.IO;
 
 namespace NYCZR8127DaylightEvaluation
 {
@@ -19,11 +20,20 @@ namespace NYCZR8127DaylightEvaluation
         {
             var model = new Model();
 
+            // string localFile = "/Users/serenali/Hypar Dropbox/Serena Li/Empire.json";
+            // if (File.Exists(localFile))
+            // {
+            //     string text = System.IO.File.ReadAllText(localFile);
+            //     var envModel = Model.FromJson(text);
+            //     inputModels["Envelope"] = envModel;
+            //     model.AddElements(getEnvelopes(envModel));
+            // }
+
             inputModels.TryGetValue("Site", out var siteModel);
             inputModels.TryGetValue("Envelope", out var envelopeModel);
 
-            var siteInput = getSite(inputModels, siteModel);
-            var envelopes = getEnvelopes(inputModels, envelopeModel);
+            var siteInput = getSite(siteModel);
+            var envelopes = getEnvelopes(envelopeModel);
 
             if (siteInput == null)
             {
@@ -69,9 +79,10 @@ namespace NYCZR8127DaylightEvaluation
                 foreach (var vp in vantagePoints)
                 {
                     var transform = new Transform(new Vector3(90.0 + vpIndex * 200.0, site.Max.Y + margin + verticalOffsetBase * vsIndex));
-                    vp.Diagram.Draw(model, analysisObjects, input, transform, input.DebugVisualization, analysisObjectsForBlockage: analysisObjectsForBlockage);
 
                     var name = $"{vantageStreet.Name}: VP {vpIndex + 1}";
+
+                    vp.Diagram.Draw(name, model, analysisObjects, input, input.DebugVisualization, analysisObjectsForBlockage: analysisObjectsForBlockage);
 
                     var outputVp = new DaylightEvaluationVantagePoint(vp.Point, vp.Diagram.DaylightBlockage, vp.Diagram.UnblockedDaylightCredit, vp.Diagram.ProfilePenalty, vp.Diagram.AvailableDaylight, vp.Diagram.DaylightRemaining, vp.Diagram.DaylightScore, Guid.NewGuid(), name);
                     model.AddElement(outputVp);
@@ -102,7 +113,11 @@ namespace NYCZR8127DaylightEvaluation
             {
                 pass = false;
             }
-            if (overallScore < 75 || (input.QualifyForEastMidtownSubdistrict && overallScore < 66))
+            if (!input.QualifyForEastMidtownSubdistrict && overallScore < 75)
+            {
+                pass = false;
+            }
+            if (input.QualifyForEastMidtownSubdistrict && overallScore < 66)
             {
                 pass = false;
             }
@@ -118,7 +133,7 @@ namespace NYCZR8127DaylightEvaluation
         }
 
         // Grab the biggest site's bounding box from the model
-        private static Site getSite(Dictionary<string, Model> inputModels, Model model)
+        private static Site getSite(Model model)
         {
             if (model == null)
             {
@@ -132,7 +147,7 @@ namespace NYCZR8127DaylightEvaluation
         }
 
         // Grab envelopes from the model
-        private static List<Envelope> getEnvelopes(Dictionary<string, Model> inputModels, Model model)
+        private static List<Envelope> getEnvelopes(Model model)
         {
             if (model == null)
             {
@@ -167,6 +182,11 @@ namespace NYCZR8127DaylightEvaluation
                 }
                 else
                 {
+                    if (envelope.Profile == null)
+                    {
+                        throw new Exception("Envelope is missing 'profile' curve.");
+                    }
+
                     var extrude1 = new Elements.Geometry.Solids.Extrude(envelope.Profile, cutHeight, up, false);
                     var rep1 = new Representation(new List<Elements.Geometry.Solids.SolidOperation>() { extrude1 });
                     var env1 = new Envelope(envelope.Profile, 0, cutHeight, up, 0, new Transform(), envelope.Material, rep1, false, Guid.NewGuid(), "");

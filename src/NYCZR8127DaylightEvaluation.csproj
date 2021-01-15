@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\dependencies\NYCZR8127DaylightEvaluation.Dependencies.csproj" />
+    <ProjectReference Include="..\..\..\..\..\..\..\Github\hypar\Elements.SVG\Elements.SVG\Elements.SVG.csproj" />
   </ItemGroup>
 
   <ItemGroup>

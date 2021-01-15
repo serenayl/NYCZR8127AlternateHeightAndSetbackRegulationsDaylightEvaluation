@@ -63,7 +63,7 @@ namespace NYCZR8127DaylightEvaluation
 
         public Square(PlanGrid planGrid, SectionGrid sectionGrid)
         {
-            this.Id = (planGrid.Id, sectionGrid.Id);
+            this.Id = (planGrid.Grid.Domain.Min < 0 ? -1 * planGrid.Id : planGrid.Id, sectionGrid.Id);
             this.PlanGrid = planGrid;
             this.SectionGrid = sectionGrid;
 
@@ -79,7 +79,7 @@ namespace NYCZR8127DaylightEvaluation
             }
 
             if (
-                this.PlanGrid.Grid.Domain.Max <= Settings.SectionCutoffLine &&
+                this.SectionGrid.Grid.Domain.Max <= Settings.SectionCutoffLine &&
                 this.PlanGrid.Multiplier == (isParentSquare ? 1.0 : 0.2) // code is unclear on this, but to be safe we do not count unblocked squares for credit that are cut off by daylight boundaries
             )
             {
