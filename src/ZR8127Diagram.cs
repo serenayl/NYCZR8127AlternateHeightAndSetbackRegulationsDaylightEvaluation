@@ -507,6 +507,7 @@ namespace NYCZR8127DaylightEvaluation
         /// <returns></returns>
         public static Vector3 MapCoordinate(double planAngle, double sectionAngle)
         {
+            // Formula courtesy Luis Felipe Paris for finding a close match to zoning code arcs
             var angle = Math.Atan(
                 Math.Tan(sectionAngle / 180.0 * Math.PI) * Math.Cos(planAngle / 180 * Math.PI)
             );
