@@ -3,6 +3,7 @@ using Elements.Geometry;
 using System.Collections.Generic;
 using System;
 using System.Linq;
+using System.IO;
 
 namespace NYCZR8127DaylightEvaluation
 {
@@ -19,11 +20,20 @@ namespace NYCZR8127DaylightEvaluation
         {
             var model = new Model();
 
+            // string localFile = "/Users/serenali/Hypar Dropbox/Serena Li/Empire.json";
+            // if (File.Exists(localFile))
+            // {
+            //     string text = System.IO.File.ReadAllText(localFile);
+            //     var envModel = Model.FromJson(text);
+            //     inputModels["Envelope"] = envModel;
+            //     model.AddElements(getEnvelopes(envModel));
+            // }
+
             inputModels.TryGetValue("Site", out var siteModel);
             inputModels.TryGetValue("Envelope", out var envelopeModel);
 
-            var siteInput = getSite(inputModels, siteModel);
-            var envelopes = getEnvelopes(inputModels, envelopeModel);
+            var siteInput = getSite(siteModel);
+            var envelopes = getEnvelopes(envelopeModel);
 
             if (siteInput == null)
             {
@@ -119,7 +129,7 @@ namespace NYCZR8127DaylightEvaluation
         }
 
         // Grab the biggest site's bounding box from the model
-        private static Site getSite(Dictionary<string, Model> inputModels, Model model)
+        private static Site getSite(Model model)
         {
             if (model == null)
             {
@@ -133,7 +143,7 @@ namespace NYCZR8127DaylightEvaluation
         }
 
         // Grab envelopes from the model
-        private static List<Envelope> getEnvelopes(Dictionary<string, Model> inputModels, Model model)
+        private static List<Envelope> getEnvelopes(Model model)
         {
             if (model == null)
             {

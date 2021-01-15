@@ -63,7 +63,7 @@ namespace NYCZR8127DaylightEvaluation
 
         public Square(PlanGrid planGrid, SectionGrid sectionGrid)
         {
-            this.Id = (planGrid.Id, sectionGrid.Id);
+            this.Id = (planGrid.Grid.Domain.Min < 0 ? -1 * planGrid.Id : planGrid.Id, sectionGrid.Id);
             this.PlanGrid = planGrid;
             this.SectionGrid = sectionGrid;
 
