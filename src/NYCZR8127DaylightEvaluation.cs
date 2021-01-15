@@ -113,7 +113,11 @@ namespace NYCZR8127DaylightEvaluation
             {
                 pass = false;
             }
-            if (overallScore < 75 || (input.QualifyForEastMidtownSubdistrict && overallScore < 66))
+            if (!input.QualifyForEastMidtownSubdistrict && overallScore < 75)
+            {
+                pass = false;
+            }
+            if (input.QualifyForEastMidtownSubdistrict && overallScore < 66)
             {
                 pass = false;
             }
@@ -178,6 +182,11 @@ namespace NYCZR8127DaylightEvaluation
                 }
                 else
                 {
+                    if (envelope.Profile == null)
+                    {
+                        throw new Exception("Envelope is missing 'profile' curve.");
+                    }
+
                     var extrude1 = new Elements.Geometry.Solids.Extrude(envelope.Profile, cutHeight, up, false);
                     var rep1 = new Representation(new List<Elements.Geometry.Solids.SolidOperation>() { extrude1 });
                     var env1 = new Envelope(envelope.Profile, 0, cutHeight, up, 0, new Transform(), envelope.Material, rep1, false, Guid.NewGuid(), "");
