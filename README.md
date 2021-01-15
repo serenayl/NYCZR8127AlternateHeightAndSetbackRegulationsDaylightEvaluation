@@ -10,8 +10,6 @@ This calculator only handles rectangular lots with 4 horizontal and vertical sid
 
 When following the example in the zoning resolution, most of our score numbers differ in some way from what is shown. Where possible, we made decisions that would yield a more conservative score.
 
-It is recommended that you view the results in ortho top view, as some of the items are shifted in elevation to avoid mesh collisions.
-
 This is an estimator and is not intended to guarantee compliance. This function has no affiliation with the NYC Department of City Planning.
 
 This is a work in progress: if you run into any errors, please contact serena@hypar.io
