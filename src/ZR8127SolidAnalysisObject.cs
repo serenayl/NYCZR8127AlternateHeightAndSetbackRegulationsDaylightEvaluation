@@ -8,11 +8,13 @@ using Elements.Spatial;
 namespace NYCZR8127DaylightEvaluation
 {
 
-    public class AnalysisEdge {
+    public class AnalysisEdge
+    {
         public long LineId;
         public bool Reversed;
 
-        public AnalysisEdge(long lineId, bool reversed) {
+        public AnalysisEdge(long lineId, bool reversed)
+        {
             this.LineId = lineId;
             this.Reversed = reversed;
         }
@@ -26,11 +28,63 @@ namespace NYCZR8127DaylightEvaluation
         public Dictionary<long, List<long>> Lines = new Dictionary<long, List<long>>();
         public List<List<AnalysisEdge>> Surfaces = new List<List<AnalysisEdge>>();
 
-        public SolidAnalysisObject(Elements.Geometry.Solids.SolidOperation solid, Transform transform)
+        private long _maxVertexKey = 0;
+
+        private SolidAnalysisObject(Mesh mesh)
+        {
+            Dictionary<string, long> edgeLookup = new Dictionary<string, long>();
+
+            long edgeIdx = 0;
+
+            foreach (var vertex in mesh.Vertices)
+            {
+                var key = vertex.Index;
+                var point = vertex.Position;
+                this.Points.Add(key, point);
+                this._maxVertexKey = Math.Max(this._maxVertexKey, key);
+            }
+
+            var tIdx = 0;
+
+            foreach (var triangle in mesh.Triangles)
+            {
+                var vertices = triangle.Vertices.ToList();
+                var edges = new List<AnalysisEdge>();
+
+                var vIdx = 0;
+
+                foreach (var startVertex in vertices)
+                {
+                    var endVertex = vIdx == vertices.Count - 1 ? vertices[0] : vertices[vIdx + 1];
+
+                    var lowerVertex = startVertex.Index < endVertex.Index ? startVertex : endVertex;
+                    var higherVertex = startVertex.Index > endVertex.Index ? startVertex : endVertex;
+
+                    var lineIdUniq = $"{lowerVertex.Index}_{higherVertex.Index}";
+
+                    if (!edgeLookup.ContainsKey(lineIdUniq))
+                    {
+                        this.AddEdge(edgeIdx, lowerVertex.Index, higherVertex.Index);
+                        edgeLookup.Add(lineIdUniq, edgeIdx);
+                        edgeIdx += 1;
+                    }
+
+                    if (edgeLookup.TryGetValue(lineIdUniq, out long addedOrExistingEdgeIdx))
+                    {
+                        var isReversed = startVertex.Index != lowerVertex.Index;
+                        edges.Add(new AnalysisEdge(addedOrExistingEdgeIdx, isReversed));
+                    }
+
+                    vIdx += 1;
+                }
+                this.Surfaces.Add(edges);
+                tIdx += 1;
+            }
+        }
+
+        private SolidAnalysisObject(Elements.Geometry.Solids.SolidOperation solid, Transform transform)
         {
             var solidTransform = solid.LocalTransform;
-
-            long maxVertexKey = 0;
 
             foreach (var vertex in solid.Solid.Vertices)
             {
@@ -39,51 +93,12 @@ namespace NYCZR8127DaylightEvaluation
                 var locallyTransformedPoint = solidTransform == null ? new Vector3(point) : solidTransform.OfVector(vertex.Value.Point);
                 var globallyTransformedPoint = transform.OfVector(locallyTransformedPoint);
                 this.Points.Add(key, globallyTransformedPoint);
-                maxVertexKey = Math.Max(maxVertexKey, key);
+                this._maxVertexKey = Math.Max(this._maxVertexKey, key);
             }
 
             foreach (var edge in solid.Solid.Edges)
             {
-                if (this.Points.TryGetValue(edge.Value.Left.Vertex.Id, out var start) && this.Points.TryGetValue(edge.Value.Right.Vertex.Id, out var end))
-                {
-                    var dist = start.DistanceTo(end);
-                    var line = new Line(start, end);
-
-                    if (!SkipSubdivide && dist > DivisionLength && (start.X != end.X || start.Y != end.Y))
-                    {
-                        var indices = new List<long>() { edge.Value.Left.Vertex.Id };
-
-                        var grid = new Grid1d(line);
-                        grid.DivideByFixedLength(DivisionLength, FixedDivisionMode.RemainderAtBothEnds);
-                        var cells = grid.GetCells();
-
-                        // Get lines representing each 10' cell
-                        var cellLines = cells.Select(c => c.GetCellGeometry()).OfType<Line>().ToArray();
-
-                        // Add end of each division except for last point
-                        foreach (var cellLine in cellLines.SkipLast(1))
-                        {
-                            var index = maxVertexKey + 1;
-                            var point = cellLine.PointAt(1.0);
-                            this.Points.Add(index, point);
-                            indices.Add(index);
-                            maxVertexKey = index;
-                        }
-
-                        // Add right point
-                        indices.Add(edge.Value.Right.Vertex.Id);
-                        this.Lines.Add(edge.Key, indices);
-                    }
-                    else
-                    {
-                        this.Lines.Add(edge.Key, new List<long>() { edge.Value.Left.Vertex.Id, edge.Value.Right.Vertex.Id });
-                    }
-
-                }
-                else
-                {
-                    throw new Exception("Malformed geometry found: no vertex found at address for this edge.");
-                }
+                this.AddEdge(edge.Key, edge.Value.Left.Vertex.Id, edge.Value.Right.Vertex.Id);
             }
 
             foreach (var face in solid.Solid.Faces.Values)
@@ -121,18 +136,56 @@ namespace NYCZR8127DaylightEvaluation
         {
             var list = new List<SolidAnalysisObject>();
 
-            // foreach (var mesh in meshes)
-            // {
-            //     var meshTransform = mesh.Transform;
-
-            //     // foreach (var solid in mesh.Representation.SolidOperations)
-            //     // {
-            //     //     var analysisObject = new SolidAnalysisObject(solid, meshTransform);
-            //     //     list.Add(analysisObject);
-            //     // }
-            // }
+            foreach (var mesh in meshes)
+            {
+                var analysisObject = new SolidAnalysisObject(mesh);
+                list.Add(analysisObject);
+            }
 
             return list;
+        }
+
+        private void AddEdge(long key, long startVertexId, long endVertexId)
+        {
+            if (this.Points.TryGetValue(startVertexId, out var start) && this.Points.TryGetValue(endVertexId, out var end))
+            {
+                var dist = start.DistanceTo(end);
+                var line = new Line(start, end);
+
+                if (!SkipSubdivide && dist > DivisionLength && (start.X != end.X || start.Y != end.Y))
+                {
+                    var indices = new List<long>() { startVertexId };
+
+                    var grid = new Grid1d(line);
+                    grid.DivideByFixedLength(DivisionLength, FixedDivisionMode.RemainderAtBothEnds);
+                    var cells = grid.GetCells();
+
+                    // Get lines representing each 10' cell
+                    var cellLines = cells.Select(c => c.GetCellGeometry()).OfType<Line>().ToArray();
+
+                    // Add end of each division except for last point
+                    foreach (var cellLine in cellLines.SkipLast(1))
+                    {
+                        var index = this._maxVertexKey + 1;
+                        var point = cellLine.PointAt(1.0);
+                        this.Points.Add(index, point);
+                        indices.Add(index);
+                        this._maxVertexKey = index;
+                    }
+
+                    // Add right point
+                    indices.Add(endVertexId);
+                    this.Lines.Add(key, indices);
+                }
+                else
+                {
+                    this.Lines.Add(key, new List<long>() { startVertexId, endVertexId });
+                }
+            }
+            else
+            {
+                throw new Exception("Malformed geometry found: no vertex found at address for this edge.");
+            }
         }
     }
 }

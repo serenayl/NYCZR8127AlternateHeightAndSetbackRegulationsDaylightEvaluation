@@ -550,6 +550,12 @@ namespace NYCZR8127DaylightEvaluation
                 }
             }
 
+            if (rawPolygons.Count == 0)
+            {
+                drawSilhouettes = new List<Polygon>();
+                return new List<Polygon>();
+            }
+
             // Raw angle polygon(s), from which we will run our calculations
             var unionedRawPolygons = new List<Polygon>(Polygon.UnionAll(rawPolygons));
 

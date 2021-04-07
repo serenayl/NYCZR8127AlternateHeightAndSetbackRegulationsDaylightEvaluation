@@ -46,7 +46,21 @@ namespace NYCZR8127DaylightEvaluation
 
             SolidAnalysisObject.SkipSubdivide = input.SkipSubdivide;
 
-            var analysisObjects = SolidAnalysisObject.MakeFromEnvelopes(envelopes);
+            var meshes = new List<Mesh>();
+            foreach (var envelope in envelopes)
+            {
+                var mesh = new Mesh();
+                foreach (var solidOp in envelope.Representation.SolidOperations)
+                {
+                    var localTransform = solidOp.LocalTransform == null ? new Transform() : new Transform(solidOp.LocalTransform);
+                    solidOp.Solid.Tessellate(ref mesh, localTransform.Concatenated(envelope.Transform));
+                }
+                meshes.Add(mesh);
+            }
+
+            var analysisObjects = SolidAnalysisObject.MakeFromMeshes(meshes);
+
+            // var analysisObjects = SolidAnalysisObject.MakeFromEnvelopes(envelopes);
 
             // Only applicable for E Midtown
             List<Envelope> envelopesForBlockage = input.QualifyForEastMidtownSubdistrict ? getEastMidtownEnvelopes(envelopes) : null;
