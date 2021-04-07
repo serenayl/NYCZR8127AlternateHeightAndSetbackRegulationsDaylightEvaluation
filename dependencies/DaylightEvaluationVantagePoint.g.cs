@@ -7,7 +7,7 @@ using Elements;
 using Elements.GeoJSON;
 using Elements.Geometry;
 using Elements.Geometry.Solids;
-using Elements.Properties;
+using Elements.Spatial;
 using Elements.Validators;
 using Elements.Serialization.JSON;
 using System;
@@ -23,33 +23,31 @@ namespace Elements
     /// <summary>A vantage point for use with NYC ZR 81-27.</summary>
     [Newtonsoft.Json.JsonConverter(typeof(Elements.Serialization.JSON.JsonInheritanceConverter), "discriminator")]
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "10.1.21.0 (Newtonsoft.Json v12.0.0.0)")]
-    [UserElement]
-	public partial class DaylightEvaluationVantagePoint : Element
+    public partial class DaylightEvaluationVantagePoint : Element
     {
         [Newtonsoft.Json.JsonConstructor]
         public DaylightEvaluationVantagePoint(Vector3 @position, double @daylightBlockage, double @unblockedDaylightCredit, double @profileDaylightBlockage, double @availableDaylight, double @daylightRemaining, double @daylightScore, System.Guid @id, string @name)
             : base(id, name)
         {
-            var validator = Validator.Instance.GetFirstValidatorForType<DaylightEvaluationVantagePoint>
-            ();
+            var validator = Validator.Instance.GetFirstValidatorForType<DaylightEvaluationVantagePoint>();
             if(validator != null)
             {
                 validator.PreConstruct(new object[]{ @position, @daylightBlockage, @unblockedDaylightCredit, @profileDaylightBlockage, @availableDaylight, @daylightRemaining, @daylightScore, @id, @name});
             }
         
-                this.Position = @position;
-                this.DaylightBlockage = @daylightBlockage;
-                this.UnblockedDaylightCredit = @unblockedDaylightCredit;
-                this.ProfileDaylightBlockage = @profileDaylightBlockage;
-                this.AvailableDaylight = @availableDaylight;
-                this.DaylightRemaining = @daylightRemaining;
-                this.DaylightScore = @daylightScore;
+            this.Position = @position;
+            this.DaylightBlockage = @daylightBlockage;
+            this.UnblockedDaylightCredit = @unblockedDaylightCredit;
+            this.ProfileDaylightBlockage = @profileDaylightBlockage;
+            this.AvailableDaylight = @availableDaylight;
+            this.DaylightRemaining = @daylightRemaining;
+            this.DaylightScore = @daylightScore;
             
             if(validator != null)
             {
-            validator.PostConstruct(this);
+                validator.PostConstruct(this);
             }
-            }
+        }
     
         /// <summary>The position of the vantage point.</summary>
         [Newtonsoft.Json.JsonProperty("Position", Required = Newtonsoft.Json.Required.AllowNull)]

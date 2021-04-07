@@ -8,13 +8,23 @@ using Elements.Spatial;
 namespace NYCZR8127DaylightEvaluation
 {
 
+    public class AnalysisEdge {
+        public long LineId;
+        public bool Reversed;
+
+        public AnalysisEdge(long lineId, bool reversed) {
+            this.LineId = lineId;
+            this.Reversed = reversed;
+        }
+    }
+
     public class SolidAnalysisObject
     {
         private static double DivisionLength = Units.FeetToMeters(10.0);
         public static Boolean SkipSubdivide = false;
         public Dictionary<long, Vector3> Points = new Dictionary<long, Vector3>();
         public Dictionary<long, List<long>> Lines = new Dictionary<long, List<long>>();
-        public List<List<Elements.Geometry.Solids.HalfEdge>> Surfaces = new List<List<Elements.Geometry.Solids.HalfEdge>>();
+        public List<List<AnalysisEdge>> Surfaces = new List<List<AnalysisEdge>>();
 
         public SolidAnalysisObject(Elements.Geometry.Solids.SolidOperation solid, Transform transform)
         {
@@ -78,10 +88,11 @@ namespace NYCZR8127DaylightEvaluation
 
             foreach (var face in solid.Solid.Faces.Values)
             {
-                var edges = new List<Elements.Geometry.Solids.HalfEdge>();
+                var edges = new List<AnalysisEdge>();
                 foreach (var edge in face.Outer.Edges)
                 {
-                    edges.Add(edge);
+                    var isReversed = edge.Vertex.Id != edge.Edge.Left.Vertex.Id;
+                    edges.Add(new AnalysisEdge(edge.Edge.Id, isReversed));
                 }
                 // TODO: do not include faces that sit at zero
                 this.Surfaces.Add(edges);
@@ -102,6 +113,24 @@ namespace NYCZR8127DaylightEvaluation
                     list.Add(analysisObject);
                 }
             }
+
+            return list;
+        }
+
+        public static List<SolidAnalysisObject> MakeFromMeshes(List<Mesh> meshes)
+        {
+            var list = new List<SolidAnalysisObject>();
+
+            // foreach (var mesh in meshes)
+            // {
+            //     var meshTransform = mesh.Transform;
+
+            //     // foreach (var solid in mesh.Representation.SolidOperations)
+            //     // {
+            //     //     var analysisObject = new SolidAnalysisObject(solid, meshTransform);
+            //     //     list.Add(analysisObject);
+            //     // }
+            // }
 
             return list;
         }

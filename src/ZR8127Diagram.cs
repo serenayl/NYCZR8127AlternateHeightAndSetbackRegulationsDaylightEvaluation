@@ -484,11 +484,11 @@ namespace NYCZR8127DaylightEvaluation
                 {
                     var srfAPs = new List<AnalysisPoint>();
 
-                    foreach (var edge in surface)
+                    foreach (var analysisEdge in surface)
                     {
-                        var isLeftToRight = edge.Vertex.Id == edge.Edge.Left.Vertex.Id;
+                        var isLeftToRight = !analysisEdge.Reversed;
 
-                        if (edges.TryGetValue(edge.Edge.Id, out var points))
+                        if (edges.TryGetValue(analysisEdge.LineId, out var points))
                         {
                             var edgePoints = isLeftToRight ? points.SkipLast(1) : points.AsEnumerable().Reverse().SkipLast(1);
                             var coordinates = edgePoints.Select(analysisPoint => analysisPoint).ToArray();
