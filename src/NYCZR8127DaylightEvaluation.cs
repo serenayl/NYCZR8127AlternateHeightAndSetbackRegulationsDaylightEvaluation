@@ -20,14 +20,14 @@ namespace NYCZR8127DaylightEvaluation
         {
             var model = new Model();
 
-            // string localFile = "/Users/serenali/Hypar Dropbox/Serena Li/Empire.json";
-            // if (File.Exists(localFile))
-            // {
-            //     string text = System.IO.File.ReadAllText(localFile);
-            //     var envModel = Model.FromJson(text);
-            //     inputModels["Envelope"] = envModel;
-            //     model.AddElements(getEnvelopes(envModel));
-            // }
+            string localFile = "/Users/serenali/Hypar Dropbox/Serena Li/Functions/Daylight Evaluation Functions/CSharpVersion/NYCZR8127DaylightEvaluation/src/test.json";
+            if (File.Exists(localFile))
+            {
+                Console.WriteLine("Using local file");
+                string text = System.IO.File.ReadAllText(localFile);
+                var envModel = Model.FromJson(text);
+                inputModels["Envelope"] = envModel;
+            }
 
             inputModels.TryGetValue("Site", out var siteModel);
             inputModels.TryGetValue("Envelope", out var envelopeModel);

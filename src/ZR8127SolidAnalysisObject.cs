@@ -18,6 +18,7 @@ namespace NYCZR8127DaylightEvaluation
 
         public SolidAnalysisObject(Elements.Geometry.Solids.SolidOperation solid, Transform transform)
         {
+            Console.WriteLine($"Local transofrm: {solid.LocalTransform}");
             var solidTransform = solid.LocalTransform;
 
             long maxVertexKey = 0;
@@ -95,6 +96,8 @@ namespace NYCZR8127DaylightEvaluation
             foreach (var envelope in envelopes)
             {
                 var envelopeTransform = envelope.Transform;
+
+                Console.WriteLine($"Envelope transform: {envelopeTransform}");
 
                 foreach (var solid in envelope.Representation.SolidOperations)
                 {
