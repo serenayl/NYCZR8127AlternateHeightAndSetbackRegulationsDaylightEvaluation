@@ -3,11 +3,8 @@
   <ItemGroup>
     <ProjectReference Include="..\dependencies\NYCZR8127DaylightEvaluation.Dependencies.csproj" />
     <ProjectReference Include="..\..\..\..\..\..\..\Github\hypar\Elements.SVG\Elements.SVG\Elements.SVG.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Hypar.Elements" Version="0.8.5-alpha.27" />
-    <PackageReference Include="Hypar.Functions" Version="0.8.5-alpha.27" />
+    <ProjectReference Include="..\..\..\..\..\..\..\Github\hypar\Elements\Elements\src\Elements.csproj" />
+    <ProjectReference Include="..\..\..\..\..\..\..\Github\hypar\Hypar\Hypar.Functions\src\Hypar.Functions.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
