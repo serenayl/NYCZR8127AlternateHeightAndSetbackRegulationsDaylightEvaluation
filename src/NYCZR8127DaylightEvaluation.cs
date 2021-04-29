@@ -200,19 +200,12 @@ namespace NYCZR8127DaylightEvaluation
                                 if (segment.Intersects(plane, out var intersection))
                                 {
                                     intersections.Add(intersection);
-                                    // model.AddElement(new Panel(new Circle().ToPolygon(), BuiltInMaterials.Black, new Transform(intersection)));
                                 }
                             }
                             if (intersections.Count >= 3)
                             {
-                                // foreach(var intersection in intersections) {
-                                //     Console.WriteLine(intersection);
-                                // }
                                 profile = ConvexHull.FromPoints(intersections);
                                 profile = profile.Project(new Plane(new Vector3(), Vector3.ZAxis));
-
-                                // Console.WriteLine(profile.Segments().Length);
-                                // Console.WriteLine($"🐸 Num points: {intersections.Count}");
                             }
                             else if (intersections.Count > 0)
                             {
@@ -232,12 +225,6 @@ namespace NYCZR8127DaylightEvaluation
                         var rep2 = new Representation(new List<Elements.Geometry.Solids.SolidOperation>() { extrude2 });
                         var env2 = new Envelope(profile, cutHeight, top - cutHeight, up, 0, new Transform(new Vector3(0, 0, cutHeight)), envelope.Material, rep2, false, Guid.NewGuid(), "");
                         envelopesForBlockage.Add(env2);
-
-                        // var red = new Material("Red", new Color(1, 0, 0, 0.2));
-                        // var green = new Material("Green", new Color(1, 0, 0, 0.2));
-
-                        // model.AddElement(new GeometricElement(new Transform(), green, rep1, false, Guid.NewGuid(), "Up"));
-                        // model.AddElement(new GeometricElement(new Transform(), red, rep2, false, Guid.NewGuid(), "Down"));
                     }
                 }
             }

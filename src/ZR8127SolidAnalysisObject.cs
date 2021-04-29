@@ -88,6 +88,7 @@ namespace NYCZR8127DaylightEvaluation
             {
                 this.AddLineFromHalfEdge(halfEdge);
             }
+
             // TODO: do not include faces that sit at zero
 
             this.Surfaces.Add(halfEdges.Select(hE =>

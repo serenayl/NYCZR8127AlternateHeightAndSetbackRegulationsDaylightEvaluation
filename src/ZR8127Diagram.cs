@@ -511,16 +511,6 @@ namespace NYCZR8127DaylightEvaluation
                         {
                             rawPolygon = rawPolygon.Reversed();
                         }
-                        // if (rawPolygon.Area() < 0)
-                        // {
-                        //     Console.WriteLine("Red");
-                        //     Model.AddElement(new Panel(rawPolygon, red, new Transform(new Vector3(0, 0, i * 10))));
-                        // }
-                        // else
-                        // {
-                        //     Console.WriteLine("Green");
-                        //     Model.AddElement(new Panel(rawPolygon, green, new Transform(new Vector3(0, 0, i * 10))));
-                        // }
                         if (Math.Abs(rawPolygon.Area()) > Vector3.EPSILON)
                         {
                             rawPolygons.Add(rawPolygon);
