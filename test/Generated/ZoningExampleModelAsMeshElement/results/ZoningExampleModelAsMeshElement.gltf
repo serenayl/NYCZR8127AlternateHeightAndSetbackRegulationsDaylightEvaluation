@@ -235,7 +235,7 @@
   },
   "buffers": [
     {
-      "uri": "ZoningExampleModel_0.bin",
+      "uri": "ZoningExampleModelAsMeshElement_0.bin",
       "byteLength": 592
     }
   ],
@@ -402,7 +402,7 @@
           "mode": 1
         }
       ],
-      "name": "0_curve"
+      "name": "1_curve"
     },
     {
       "primitives": [
@@ -415,7 +415,7 @@
           "mode": 1
         }
       ],
-      "name": "2_curve"
+      "name": "3_curve"
     },
     {
       "primitives": [
@@ -428,7 +428,7 @@
           "mode": 1
         }
       ],
-      "name": "5_curve"
+      "name": "4_curve"
     },
     {
       "primitives": [
@@ -441,7 +441,7 @@
           "mode": 1
         }
       ],
-      "name": "7_curve"
+      "name": "6_curve"
     },
     {
       "primitives": [
@@ -454,7 +454,7 @@
           "mode": 1
         }
       ],
-      "name": "9_curve"
+      "name": "8_curve"
     },
     {
       "primitives": [
@@ -467,7 +467,7 @@
           "mode": 1
         }
       ],
-      "name": "11_curve"
+      "name": "10_curve"
     },
     {
       "primitives": [
@@ -480,7 +480,7 @@
           "mode": 1
         }
       ],
-      "name": "13_curve"
+      "name": "12_curve"
     },
     {
       "primitives": [
@@ -493,7 +493,7 @@
           "mode": 1
         }
       ],
-      "name": "15_curve"
+      "name": "14_curve"
     }
   ],
   "nodes": [

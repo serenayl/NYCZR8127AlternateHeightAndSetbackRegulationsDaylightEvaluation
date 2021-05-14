@@ -492,11 +492,13 @@ namespace NYCZR8127DaylightEvaluation
                     // i += 1;
                     var srfAPs = new List<AnalysisPoint>();
 
-                    foreach (var edgeMeta in surface)
+                    foreach (var analysisEdge in surface)
                     {
-                        if (edges.TryGetValue(edgeMeta.edgeId, out var points))
+                        var isLeftToRight = !analysisEdge.Reversed;
+
+                        if (edges.TryGetValue(analysisEdge.LineId, out var points))
                         {
-                            var edgePoints = edgeMeta.isLeftToRight ? points.SkipLast(1) : points.AsEnumerable().Reverse().SkipLast(1);
+                            var edgePoints = isLeftToRight ? points.SkipLast(1) : points.AsEnumerable().Reverse().SkipLast(1);
                             var coordinates = edgePoints.Select(analysisPoint => analysisPoint).ToArray();
                             srfAPs.AddRange(coordinates);
                         }
@@ -566,8 +568,14 @@ namespace NYCZR8127DaylightEvaluation
                 }
             }
 
-            // Raw angle polygon(s), from which we will run our calculations
-            var unionedRawPolygons = new List<Polygon>(Polygon.UnionAll(rawPolygons));
+            if (rawPolygons.Count == 0)
+            {
+                drawSilhouettes = new List<Polygon>();
+                return new List<Polygon>();
+            }
+
+           // Raw angle polygon(s), from which we will run our calculations
+           var unionedRawPolygons = new List<Polygon>(Polygon.UnionAll(rawPolygons));
 
             drawSilhouettes = useRawAngles ? unionedRawPolygons : new List<Polygon>(Polygon.UnionAll(drawPolygons));
 

@@ -35,13 +35,14 @@ namespace NYCZR8127DaylightEvaluation
             }
 
             var siteInput = getSite(siteModel);
-            var envelopes = getEnvelopes(envelopeModel);
+            var envelopes = getElementsOfType<Envelope>(envelopeModel);
+            var meshElements = getElementsOfType<MeshElement>(envelopeModel);
 
             if (siteInput == null)
             {
                 throw new ArgumentException("There were no sites found. Please make sure you either meet the dependency of 'Site' or the dependency of 'EnvelopeAndSite."); throw new ArgumentException("BOOO SITE IS NOT FOUND");
             }
-            if (envelopes == null || envelopes.Count < 1)
+            if ((envelopes == null || envelopes.Count < 1) && (meshElements == null || meshElements.Count < 1))
             {
                 throw new ArgumentException("There were no envelopes found. Please make sure you either meet the dependency of 'Envelope' or the dependency of 'EnvelopeAndSite.");
             }
@@ -56,6 +57,10 @@ namespace NYCZR8127DaylightEvaluation
             SolidAnalysisObject.SkipSubdivide = input.SkipSubdivide;
 
             var analysisObjects = SolidAnalysisObject.MakeFromEnvelopes(envelopes);
+
+            foreach(var analysisObject in SolidAnalysisObject.MakeFromMeshes(meshElements.Select(meshElement => meshElement.Mesh).ToList())) {
+                analysisObjects.Add(analysisObject);
+            }
 
             // Only applicable for E Midtown
             List<Envelope> envelopesForBlockage = input.QualifyForEastMidtownSubdistrict ? getEastMidtownEnvelopes(envelopes, model) : null;
@@ -139,27 +144,25 @@ namespace NYCZR8127DaylightEvaluation
         // Grab the biggest site's bounding box from the model
         private static Site getSite(Model model)
         {
-            if (model == null)
+            var sites = getElementsOfType<Site>(model);
+            if (sites == null)
             {
                 return null;
             }
-            var sites = new List<Site>();
-            sites.AddRange(model.AllElementsOfType<Site>());
             sites = sites.OrderByDescending(e => e.Perimeter.Area()).ToList();
             var site = sites[0];
             return site;
         }
 
-        // Grab envelopes from the model
-        private static List<Envelope> getEnvelopes(Model model)
+        private static List<T> getElementsOfType<T>(Model model)
         {
             if (model == null)
             {
                 return null;
             }
-            var envelopes = new List<Envelope>();
-            envelopes.AddRange(model.AllElementsOfType<Envelope>());
-            return envelopes;
+            var items = new List<T>();
+            items.AddRange(model.AllElementsOfType<T>());
+            return items;
         }
 
         private static List<Envelope> getEastMidtownEnvelopes(List<Envelope> envelopes, Model model)
