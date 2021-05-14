@@ -9,7 +9,6 @@ namespace NYCZR8127DaylightEvaluation
 {
     public static class NYCZR8127DaylightEvaluation
     {
-
         /// <summary>
         /// C# in-progress version of this
         /// </summary>
@@ -20,17 +19,20 @@ namespace NYCZR8127DaylightEvaluation
         {
             var model = new Model();
 
-            // string localFile = "/Users/serenali/Hypar Dropbox/Serena Li/Empire.json";
-            // if (File.Exists(localFile))
-            // {
-            //     string text = System.IO.File.ReadAllText(localFile);
-            //     var envModel = Model.FromJson(text);
-            //     inputModels["Envelope"] = envModel;
-            //     model.AddElements(getEnvelopes(envModel));
-            // }
-
             inputModels.TryGetValue("Site", out var siteModel);
-            inputModels.TryGetValue("Envelope", out var envelopeModel);
+
+            if (!inputModels.TryGetValue("Envelope", out var envelopeModel))
+            {
+                string localFile = "/Users/serenali/Downloads/model 18.json";
+                if (File.Exists(localFile))
+                {
+                    Console.WriteLine("Using local file");
+                    string text = System.IO.File.ReadAllText(localFile);
+                    var envModel = Model.FromJson(text);
+                    inputModels["Envelope"] = envModel;
+                }
+                inputModels.TryGetValue("Envelope", out envelopeModel);
+            }
 
             var siteInput = getSite(siteModel);
             var envelopes = getEnvelopes(envelopeModel);
@@ -44,18 +46,20 @@ namespace NYCZR8127DaylightEvaluation
                 throw new ArgumentException("There were no envelopes found. Please make sure you either meet the dependency of 'Envelope' or the dependency of 'EnvelopeAndSite.");
             }
 
+            var site = siteInput.Perimeter.Bounds();
+            var siteRect = Polygon.Rectangle(new Vector3(site.Min.X, site.Min.Y), new Vector3(site.Max.X, site.Max.Y));
+
+            model.AddElement(new ModelCurve(siteRect, name: "Site Bounds Used"));
+
+            Diagram.Model = model;
+            SolidAnalysisObject.Model = model;
             SolidAnalysisObject.SkipSubdivide = input.SkipSubdivide;
 
             var analysisObjects = SolidAnalysisObject.MakeFromEnvelopes(envelopes);
 
             // Only applicable for E Midtown
-            List<Envelope> envelopesForBlockage = input.QualifyForEastMidtownSubdistrict ? getEastMidtownEnvelopes(envelopes) : null;
+            List<Envelope> envelopesForBlockage = input.QualifyForEastMidtownSubdistrict ? getEastMidtownEnvelopes(envelopes, model) : null;
             var analysisObjectsForBlockage = input.QualifyForEastMidtownSubdistrict ? SolidAnalysisObject.MakeFromEnvelopes(envelopesForBlockage) : null;
-
-            var site = siteInput.Perimeter.Bounds();
-            var siteRect = Polygon.Rectangle(new Vector3(site.Min.X, site.Min.Y), new Vector3(site.Max.X, site.Max.Y));
-
-            model.AddElement(new ModelCurve(siteRect, name: "Site Bounds Used"));
 
             var margin = 20;
             var vsIndex = 0;
@@ -158,10 +162,11 @@ namespace NYCZR8127DaylightEvaluation
             return envelopes;
         }
 
-        private static List<Envelope> getEastMidtownEnvelopes(List<Envelope> envelopes)
+        private static List<Envelope> getEastMidtownEnvelopes(List<Envelope> envelopes, Model model)
         {
             var up = new Vector3(0, 0, 1);
             var cutHeight = Units.FeetToMeters(150.0);
+            var plane = new Plane(new Vector3(0, 0, cutHeight), Vector3.ZAxis);
             var envelopesForBlockage = new List<Envelope>();
 
             foreach (var envelope in envelopes)
@@ -171,7 +176,6 @@ namespace NYCZR8127DaylightEvaluation
 
                 if (top < cutHeight)
                 {
-                    // This envelope is below the cut height and will be thrown away
                     continue;
                 }
 
@@ -182,20 +186,46 @@ namespace NYCZR8127DaylightEvaluation
                 }
                 else
                 {
-                    if (envelope.Profile == null)
+                    Polygon profile = null;
+
+                    foreach (var solidOp in envelope.Representation.SolidOperations)
                     {
-                        throw new Exception("Envelope is missing 'profile' curve.");
+                        var intersections = new List<Vector3>();
+
+                        foreach (var face in solidOp.Solid.Faces)
+                        {
+                            var polygon = face.Value.Outer.ToPolygon();
+                            foreach (var segment in polygon.Segments())
+                            {
+                                if (segment.Intersects(plane, out var intersection))
+                                {
+                                    intersections.Add(intersection);
+                                }
+                            }
+                            if (intersections.Count >= 3)
+                            {
+                                profile = ConvexHull.FromPoints(intersections);
+                                profile = profile.Project(new Plane(new Vector3(), Vector3.ZAxis));
+                            }
+                            else if (intersections.Count > 0)
+                            {
+                                Console.WriteLine($"Failed to intersect polygon for East Midtown: Found {intersections.Count} point");
+                            }
+                        }
                     }
 
-                    var extrude1 = new Elements.Geometry.Solids.Extrude(envelope.Profile, cutHeight, up, false);
-                    var rep1 = new Representation(new List<Elements.Geometry.Solids.SolidOperation>() { extrude1 });
-                    var env1 = new Envelope(envelope.Profile, 0, cutHeight, up, 0, new Transform(), envelope.Material, rep1, false, Guid.NewGuid(), "");
-                    envelopesForBlockage.Add(env1);
+                    if (profile != null)
+                    {
+                        var extrude1 = new Elements.Geometry.Solids.Extrude(profile, cutHeight, up, false);
+                        var rep1 = new Representation(new List<Elements.Geometry.Solids.SolidOperation>() { extrude1 });
+                        var env1 = new Envelope(profile, 0, cutHeight, up, 0, new Transform(), envelope.Material, rep1, false, Guid.NewGuid(), "");
+                        envelopesForBlockage.Add(env1);
 
-                    var extrude2 = new Elements.Geometry.Solids.Extrude(envelope.Profile, top - cutHeight, up, false);
-                    var rep2 = new Representation(new List<Elements.Geometry.Solids.SolidOperation>() { extrude2 });
-                    var env2 = new Envelope(envelope.Profile, cutHeight, top - cutHeight, up, 0, new Transform(new Vector3(0, 0, cutHeight)), envelope.Material, rep2, false, Guid.NewGuid(), "");
-                    envelopesForBlockage.Add(env2);
+                        var extrude2 = new Elements.Geometry.Solids.Extrude(profile, top - cutHeight, up, false);
+                        var rep2 = new Representation(new List<Elements.Geometry.Solids.SolidOperation>() { extrude2 });
+                        var env2 = new Envelope(profile, cutHeight, top - cutHeight, up, 0, new Transform(new Vector3(0, 0, cutHeight)), envelope.Material, rep2, false, Guid.NewGuid(), "");
+                        envelopesForBlockage.Add(env2);
+                    }
                 }
             }
 

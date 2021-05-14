@@ -46,7 +46,13 @@
         "type": "array",
         "$hyparOrder": 0,
         "items": {
-          "default": null,
+          "default": {
+            "Line": null,
+            "Block Depth In Feet": 200,
+            "Street Wall Continuity": false,
+            "Width": "100ft",
+            "Name": "My Street Name"
+          },
           "name": "Vantage Street",
           "description": "A vantage street for calculation",
           "type": "object",

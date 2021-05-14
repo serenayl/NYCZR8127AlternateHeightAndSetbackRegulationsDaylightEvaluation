@@ -49,6 +49,8 @@ namespace NYCZR8127DaylightEvaluation
         public double DaylightRemaining;
         public double DaylightScore;
 
+        public static Model Model; // For debugging only
+
         /// <summary>
         /// A diagram from a vantage point.
         /// Figures out grids and subgrids and profile curves and how to draw your building.
@@ -480,26 +482,36 @@ namespace NYCZR8127DaylightEvaluation
                     edges.Add(lineMapping.Key, edgePoints);
                 }
 
+                // var i = 0;
+
+                // var red = new Material("Red", new Color(1, 0, 0, 0.2));
+                // var green = new Material("Green", new Color(0, 1, 0, 0.2));
+
                 foreach (var surface in analysisObject.Surfaces)
                 {
+                    // i += 1;
                     var srfAPs = new List<AnalysisPoint>();
 
-                    foreach (var edge in surface)
+                    foreach (var edgeMeta in surface)
                     {
-                        var isLeftToRight = edge.Vertex.Id == edge.Edge.Left.Vertex.Id;
-
-                        if (edges.TryGetValue(edge.Edge.Id, out var points))
+                        if (edges.TryGetValue(edgeMeta.edgeId, out var points))
                         {
-                            var edgePoints = isLeftToRight ? points.SkipLast(1) : points.AsEnumerable().Reverse().SkipLast(1);
+                            var edgePoints = edgeMeta.isLeftToRight ? points.SkipLast(1) : points.AsEnumerable().Reverse().SkipLast(1);
                             var coordinates = edgePoints.Select(analysisPoint => analysisPoint).ToArray();
                             srfAPs.AddRange(coordinates);
                         }
                     }
 
+                    var rawPoints = srfAPs.Select(ap => ap.PlanAndSection).ToList();
+
                     try
                     {
-                        var rawPolygon = new Polygon(srfAPs.Select(ap => ap.PlanAndSection).ToArray());
-                        if (rawPolygon.Area() > 0)
+                        var rawPolygon = new Polygon(rawPoints);
+                        if (rawPolygon.IsClockWise())
+                        {
+                            rawPolygon = rawPolygon.Reversed();
+                        }
+                        if (Math.Abs(rawPolygon.Area()) > Vector3.EPSILON)
                         {
                             rawPolygons.Add(rawPolygon);
 
@@ -512,7 +524,11 @@ namespace NYCZR8127DaylightEvaluation
                                 try
                                 {
                                     var drawPolygon = new Polygon(srfAPs.Select(ap => ap.DrawCoordinate).ToArray());
-                                    if (drawPolygon.Area() > 0)
+                                    if (drawPolygon.IsClockWise())
+                                    {
+                                        drawPolygon = drawPolygon.Reversed();
+                                    }
+                                    if (Math.Abs(drawPolygon.Area()) > 0)
                                     {
                                         drawPolygons.Add(drawPolygon);
                                     }

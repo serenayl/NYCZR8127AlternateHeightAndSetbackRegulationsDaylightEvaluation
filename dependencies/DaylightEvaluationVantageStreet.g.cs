@@ -7,7 +7,7 @@ using Elements;
 using Elements.GeoJSON;
 using Elements.Geometry;
 using Elements.Geometry.Solids;
-using Elements.Properties;
+using Elements.Spatial;
 using Elements.Validators;
 using Elements.Serialization.JSON;
 using System;
@@ -23,29 +23,27 @@ namespace Elements
     /// <summary>A vantage street for use with NYC ZR 81-27.</summary>
     [Newtonsoft.Json.JsonConverter(typeof(Elements.Serialization.JSON.JsonInheritanceConverter), "discriminator")]
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "10.1.21.0 (Newtonsoft.Json v12.0.0.0)")]
-    [UserElement]
-	public partial class DaylightEvaluationVantageStreet : Element
+    public partial class DaylightEvaluationVantageStreet : Element
     {
         [Newtonsoft.Json.JsonConstructor]
         public DaylightEvaluationVantageStreet(double @score, double @numberOfVantagePoints, double @centerlineDistance, System.Guid @id, string @name)
             : base(id, name)
         {
-            var validator = Validator.Instance.GetFirstValidatorForType<DaylightEvaluationVantageStreet>
-            ();
+            var validator = Validator.Instance.GetFirstValidatorForType<DaylightEvaluationVantageStreet>();
             if(validator != null)
             {
                 validator.PreConstruct(new object[]{ @score, @numberOfVantagePoints, @centerlineDistance, @id, @name});
             }
         
-                this.Score = @score;
-                this.NumberOfVantagePoints = @numberOfVantagePoints;
-                this.CenterlineDistance = @centerlineDistance;
+            this.Score = @score;
+            this.NumberOfVantagePoints = @numberOfVantagePoints;
+            this.CenterlineDistance = @centerlineDistance;
             
             if(validator != null)
             {
-            validator.PostConstruct(this);
+                validator.PostConstruct(this);
             }
-            }
+        }
     
         /// <summary>Score for the street.</summary>
         [Newtonsoft.Json.JsonProperty("Score", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
