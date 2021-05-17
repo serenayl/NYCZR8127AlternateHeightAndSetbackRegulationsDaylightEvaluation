@@ -32,23 +32,23 @@ namespace NYCZR8127DaylightEvaluation
 
         private long _maxVertexKey = 0;
 
-        private SolidAnalysisObject(Mesh mesh)
+        private SolidAnalysisObject(MeshElement meshElement)
         {
             Dictionary<string, long> edgeLookup = new Dictionary<string, long>();
 
             long edgeIdx = 0;
 
-            foreach (var vertex in mesh.Vertices)
+            foreach (var vertex in meshElement.Mesh.Vertices)
             {
                 var key = vertex.Index;
-                var point = vertex.Position;
+                var point = GeoUtilities.TransformedPoint(vertex.Position, meshElement.Transform);
                 this.Points.Add(key, point);
                 this._maxVertexKey = Math.Max(this._maxVertexKey, key);
             }
 
             var tIdx = 0;
 
-            foreach (var triangle in mesh.Triangles)
+            foreach (var triangle in meshElement.Mesh.Triangles)
             {
                 var vertices = triangle.Vertices.ToList();
                 var edges = new List<AnalysisEdge>();
@@ -92,8 +92,8 @@ namespace NYCZR8127DaylightEvaluation
             {
                 var key = vertex.Key;
                 var point = vertex.Value.Point;
-                var locallyTransformedPoint = solidTransform == null ? new Vector3(point) : solidTransform.OfVector(vertex.Value.Point);
-                var globallyTransformedPoint = transform.OfVector(locallyTransformedPoint);
+                var locallyTransformedPoint = GeoUtilities.TransformedPoint(vertex.Value.Point, solidTransform);
+                var globallyTransformedPoint = GeoUtilities.TransformedPoint(locallyTransformedPoint, transform);
                 this.Points.Add(key, globallyTransformedPoint);
                 this._maxVertexKey = Math.Max(this._maxVertexKey, key);
             }
@@ -134,13 +134,13 @@ namespace NYCZR8127DaylightEvaluation
             return list;
         }
 
-        public static List<SolidAnalysisObject> MakeFromMeshes(List<Mesh> meshes)
+        public static List<SolidAnalysisObject> MakeFromMeshElements(List<MeshElement> meshElements)
         {
             var list = new List<SolidAnalysisObject>();
 
-            foreach (var mesh in meshes)
+            foreach (var meshElement in meshElements)
             {
-                var analysisObject = new SolidAnalysisObject(mesh);
+                var analysisObject = new SolidAnalysisObject(meshElement);
                 list.Add(analysisObject);
             }
 

@@ -15,6 +15,34 @@ namespace NYCZR8127DaylightEvaluation
 
         private static Material _debugMaterial = new Material("DebugGeo", new Color(0.2, 0.5, 1, 0.5));
 
+        public static List<Vector3> TransformedVertices(IList<Vertex> vertices, Transform transform)
+        {
+            return vertices.Select(v => TransformedPoint(v.Position, transform)).ToList();
+        }
+
+        public static Vector3 TransformedPoint(Vector3 point, Transform transform)
+        {
+            return transform != null ? transform.OfVector(point) : point;
+        }
+
+        public static List<Envelope> SliceAtHeight(MeshElement meshElement, double cutHeight, Boolean showDebugGeometry)
+        {
+            var bbox = new BBox3(TransformedVertices(meshElement.Mesh.Vertices, meshElement.Transform));
+            var bottom = bbox.Min.Z;
+            var top = bbox.Max.Z;
+            var solids = new List<Elements.Geometry.Solids.SolidOperation>();
+            var solid = new Elements.Geometry.Solids.Solid();
+            foreach (var face in meshElement.Mesh.Triangles)
+            {
+                var vertices = TransformedVertices(face.Vertices, meshElement.Transform);
+                solid.AddFace(new Polygon(vertices));
+            }
+            solids.Add(new Elements.Geometry.Solids.ConstructedSolid(solid));
+            var rep = new Representation(solids);
+            var env = new Envelope(Polygon.Rectangle(new Vector3(bbox.Min.X, bbox.Min.Y), new Vector3(bbox.Max.X, bbox.Max.Y)), bottom, top - bottom, Vector3.ZAxis, 0, new Transform(), _debugMaterial, rep, false, Guid.NewGuid(), "");
+            return SliceAtHeight(env, cutHeight, showDebugGeometry);
+        }
+
         public static List<Envelope> SliceAtHeight(Envelope envelope, double cutHeight, Boolean showDebugGeometry)
         {
             var debugMaterial = new Material("DebugSolid", new Color(1, 0, 0, 1));
@@ -47,7 +75,6 @@ namespace NYCZR8127DaylightEvaluation
                             intersections.Add(intersection);
                             faceIntersections.Add(intersection);
                         }
-                        Console.WriteLine($"Face intersections: {faceIntersections.Count}");
                     }
 
                     if (faceIntersections.Count == 0)

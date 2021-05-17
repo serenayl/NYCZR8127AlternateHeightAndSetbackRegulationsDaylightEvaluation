@@ -36,13 +36,13 @@ namespace NYCZR8127DaylightEvaluation
 
             var siteInput = getSite(siteModel);
             var envelopes = getElementsOfType<Envelope>(envelopeModel);
-            var meshElements = getElementsOfType<MeshElement>(envelopeModel);
+            var meshEnvelopes = getElementsOfType<MeshElement>(envelopeModel);
 
             if (siteInput == null)
             {
                 throw new ArgumentException("There were no sites found. Please make sure you either meet the dependency of 'Site' or the dependency of 'EnvelopeAndSite."); throw new ArgumentException("BOOO SITE IS NOT FOUND");
             }
-            if ((envelopes == null || envelopes.Count < 1) && (meshElements == null || meshElements.Count < 1))
+            if ((envelopes == null || envelopes.Count < 1) && (meshEnvelopes == null || meshEnvelopes.Count < 1))
             {
                 throw new ArgumentException("There were no envelopes found. Please make sure you either meet the dependency of 'Envelope' or the dependency of 'EnvelopeAndSite.");
             }
@@ -59,14 +59,13 @@ namespace NYCZR8127DaylightEvaluation
 
             var analysisObjects = SolidAnalysisObject.MakeFromEnvelopes(envelopes);
 
-            foreach (var analysisObject in SolidAnalysisObject.MakeFromMeshes(meshElements.Select(meshElement => meshElement.Mesh).ToList()))
+            foreach (var analysisObject in SolidAnalysisObject.MakeFromMeshElements(meshEnvelopes))
             {
                 analysisObjects.Add(analysisObject);
             }
 
             // Only applicable for E Midtown
-            List<Envelope> envelopesForBlockage = input.QualifyForEastMidtownSubdistrict ? getEastMidtownEnvelopes(envelopes, model, input.DebugVisualization) : null;
-            var analysisObjectsForBlockage = input.QualifyForEastMidtownSubdistrict ? SolidAnalysisObject.MakeFromEnvelopes(envelopesForBlockage) : null;
+            List<SolidAnalysisObject> analysisObjectsForBlockage = input.QualifyForEastMidtownSubdistrict ? getEastMidtownEnvelopes(envelopes, meshEnvelopes, model, input.DebugVisualization) : null;
 
             var margin = 20;
             var vsIndex = 0;
@@ -167,12 +166,15 @@ namespace NYCZR8127DaylightEvaluation
             return items;
         }
 
-        private static List<Envelope> getEastMidtownEnvelopes(List<Envelope> envelopes, Model model, Boolean showDebugGeometry)
+        private static List<SolidAnalysisObject> getEastMidtownEnvelopes(List<Envelope> envelopes, List<MeshElement> meshEnvelopes, Model model, Boolean showDebugGeometry)
         {
+            var analysisObjects = new List<SolidAnalysisObject>();
+
             var up = new Vector3(0, 0, 1);
             var cutHeight = Units.FeetToMeters(150.0);
             var plane = new Plane(new Vector3(0, 0, cutHeight), Vector3.ZAxis);
             var envelopesForBlockage = new List<Envelope>();
+            var meshElementsForBlockage = new List<MeshElement>();
 
             foreach (var envelope in envelopes)
             {
@@ -195,7 +197,32 @@ namespace NYCZR8127DaylightEvaluation
                 }
             }
 
-            return envelopesForBlockage;
+            foreach (var meshElement in meshEnvelopes)
+            {
+                var bbox = new BBox3(GeoUtilities.TransformedVertices(meshElement.Mesh.Vertices, meshElement.Transform));
+                var bottom = bbox.Min.Z;
+                var top = bbox.Max.Z;
+
+                if (top < cutHeight)
+                {
+                    continue;
+                }
+
+                if (bottom >= cutHeight)
+                {
+                    // envelope is above the cutoff, use as-is
+                    meshElementsForBlockage.Add(meshElement);
+                }
+                else
+                {
+                    envelopesForBlockage.AddRange(GeoUtilities.SliceAtHeight(meshElement, cutHeight, showDebugGeometry));
+                }
+            }
+
+            analysisObjects.AddRange(SolidAnalysisObject.MakeFromEnvelopes(envelopesForBlockage));
+            analysisObjects.AddRange(SolidAnalysisObject.MakeFromMeshElements(meshElementsForBlockage));
+
+            return analysisObjects;
         }
     }
 }
