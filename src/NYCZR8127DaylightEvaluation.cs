@@ -36,13 +36,15 @@ namespace NYCZR8127DaylightEvaluation
 
             var siteInput = getSite(siteModel);
             var envelopes = getElementsOfType<Envelope>(envelopeModel);
+            var rhinoBreps = getElementsOfType<RhinoBrep>(envelopeModel);
+            var rhinoExtrusions = getElementsOfType<RhinoExtrusion>(envelopeModel);
             var meshEnvelopes = getElementsOfType<MeshElement>(envelopeModel);
 
             if (siteInput == null)
             {
                 throw new ArgumentException("There were no sites found. Please make sure you either meet the dependency of 'Site' or the dependency of 'EnvelopeAndSite."); throw new ArgumentException("BOOO SITE IS NOT FOUND");
             }
-            if ((envelopes == null || envelopes.Count < 1) && (meshEnvelopes == null || meshEnvelopes.Count < 1))
+            if ((envelopes == null || envelopes.Count < 1) && (meshEnvelopes == null || meshEnvelopes.Count < 1) && (rhinoBreps == null || rhinoBreps.Count < 1) && (rhinoExtrusions == null || rhinoExtrusions.Count < 1))
             {
                 throw new ArgumentException("There were no envelopes found. Please make sure you either meet the dependency of 'Envelope' or the dependency of 'EnvelopeAndSite.");
             }
@@ -64,8 +66,18 @@ namespace NYCZR8127DaylightEvaluation
                 analysisObjects.Add(analysisObject);
             }
 
+            foreach (var analysisObject in SolidAnalysisObject.MakeFromRhinoBreps(rhinoBreps))
+            {
+                analysisObjects.Add(analysisObject);
+            }
+
+            foreach (var analysisObject in SolidAnalysisObject.MakeFromRhinoExtrusions(rhinoExtrusions))
+            {
+                analysisObjects.Add(analysisObject);
+            }
+
             // Only applicable for E Midtown
-            List<SolidAnalysisObject> analysisObjectsForBlockage = input.QualifyForEastMidtownSubdistrict ? getEastMidtownEnvelopes(envelopes, meshEnvelopes, model, input.DebugVisualization) : null;
+            List<SolidAnalysisObject> analysisObjectsForBlockage = input.QualifyForEastMidtownSubdistrict ? getEastMidtownEnvelopes(envelopes, rhinoBreps, rhinoExtrusions, meshEnvelopes, model, input.DebugVisualization) : null;
 
             var margin = 20;
             var vsIndex = 0;
@@ -166,7 +178,7 @@ namespace NYCZR8127DaylightEvaluation
             return items;
         }
 
-        private static List<SolidAnalysisObject> getEastMidtownEnvelopes(List<Envelope> envelopes, List<MeshElement> meshEnvelopes, Model model, Boolean showDebugGeometry)
+        private static List<SolidAnalysisObject> getEastMidtownEnvelopes(List<Envelope> envelopes, List<RhinoBrep> rhinoBreps, List<RhinoExtrusion> rhinoExtrusions, List<MeshElement> meshEnvelopes, Model model, Boolean showDebugGeometry)
         {
             var analysisObjects = new List<SolidAnalysisObject>();
 
@@ -189,12 +201,22 @@ namespace NYCZR8127DaylightEvaluation
                 if (bottom >= cutHeight)
                 {
                     // envelope is above the cutoff, use as-is
-                    envelopesForBlockage.Add(envelope);
+                    analysisObjects.AddRange(SolidAnalysisObject.MakeFromEnvelopes(new List<Envelope>() { envelope }));
                 }
                 else
                 {
                     envelopesForBlockage.AddRange(GeoUtilities.SliceAtHeight(envelope, cutHeight, showDebugGeometry));
                 }
+            }
+
+            foreach (var rhinoBrep in rhinoBreps)
+            {
+                envelopesForBlockage.AddRange(GeoUtilities.SliceAtHeight(rhinoBrep, cutHeight, showDebugGeometry));
+            }
+
+            foreach (var rhinoExtrusion in rhinoExtrusions)
+            {
+                envelopesForBlockage.AddRange(GeoUtilities.SliceAtHeight(rhinoExtrusion, cutHeight, showDebugGeometry));
             }
 
             foreach (var meshElement in meshEnvelopes)

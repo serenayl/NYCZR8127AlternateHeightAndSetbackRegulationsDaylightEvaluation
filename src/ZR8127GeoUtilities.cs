@@ -20,6 +20,11 @@ namespace NYCZR8127DaylightEvaluation
             return vertices.Select(v => TransformedPoint(v.Position, transform)).ToList();
         }
 
+        public static List<Vector3> TransformedPoints(IList<Vector3> points, Transform transform)
+        {
+            return points.Select(pt => TransformedPoint(pt, transform)).ToList();
+        }
+
         public static Vector3 TransformedPoint(Vector3 point, Transform transform)
         {
             return transform != null ? transform.OfVector(point) : point;
@@ -40,6 +45,31 @@ namespace NYCZR8127DaylightEvaluation
             solids.Add(new Elements.Geometry.Solids.ConstructedSolid(solid));
             var rep = new Representation(solids);
             var env = new Envelope(Polygon.Rectangle(new Vector3(bbox.Min.X, bbox.Min.Y), new Vector3(bbox.Max.X, bbox.Max.Y)), bottom, top - bottom, Vector3.ZAxis, 0, new Transform(), _debugMaterial, rep, false, Guid.NewGuid(), "");
+            return SliceAtHeight(env, cutHeight, showDebugGeometry);
+        }
+
+        public static List<Envelope> SliceAtHeight(RhinoBrep rhinoBrep, double cutHeight, Boolean showDebugGeometry)
+        {
+            var vertices = new List<Vector3>();
+            foreach (var solidOp in rhinoBrep.Representation.SolidOperations)
+            {
+                vertices.AddRange(solidOp.Solid.Vertices.Values.Select(v => TransformedPoint(v.Point, solidOp.LocalTransform)).ToList());
+            }
+            var bbox = new BBox3(TransformedPoints(vertices, rhinoBrep.Transform));
+            var env = new Envelope(Polygon.Rectangle(new Vector3(bbox.Min.X, bbox.Min.Y), new Vector3(bbox.Max.X, bbox.Max.Y)), bbox.Min.Z, bbox.Max.Z - bbox.Min.Z, Vector3.ZAxis, 0, new Transform(), _debugMaterial, rhinoBrep.Representation, false, Guid.NewGuid(), "");
+            return SliceAtHeight(env, cutHeight, showDebugGeometry);
+        }
+
+        // This is identical to the one for RhinoBrep? Not sure how to make generic
+        public static List<Envelope> SliceAtHeight(RhinoExtrusion rhinoBrep, double cutHeight, Boolean showDebugGeometry)
+        {
+            var vertices = new List<Vector3>();
+            foreach (var solidOp in rhinoBrep.Representation.SolidOperations)
+            {
+                vertices.AddRange(solidOp.Solid.Vertices.Values.Select(v => TransformedPoint(v.Point, solidOp.LocalTransform)).ToList());
+            }
+            var bbox = new BBox3(TransformedPoints(vertices, rhinoBrep.Transform));
+            var env = new Envelope(Polygon.Rectangle(new Vector3(bbox.Min.X, bbox.Min.Y), new Vector3(bbox.Max.X, bbox.Max.Y)), bbox.Min.Z, bbox.Max.Z - bbox.Min.Z, Vector3.ZAxis, 0, new Transform(), _debugMaterial, rhinoBrep.Representation, false, Guid.NewGuid(), "");
             return SliceAtHeight(env, cutHeight, showDebugGeometry);
         }
 

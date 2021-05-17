@@ -134,6 +134,42 @@ namespace NYCZR8127DaylightEvaluation
             return list;
         }
 
+        public static List<SolidAnalysisObject> MakeFromRhinoBreps(List<RhinoBrep> envelopes)
+        {
+            var list = new List<SolidAnalysisObject>();
+
+            foreach (var envelope in envelopes)
+            {
+                var envelopeTransform = envelope.Transform;
+
+                foreach (var solid in envelope.Representation.SolidOperations)
+                {
+                    var analysisObject = new SolidAnalysisObject(solid, envelopeTransform);
+                    list.Add(analysisObject);
+                }
+            }
+
+            return list;
+        }
+
+        public static List<SolidAnalysisObject> MakeFromRhinoExtrusions(List<RhinoExtrusion> envelopes)
+        {
+            var list = new List<SolidAnalysisObject>();
+
+            foreach (var envelope in envelopes)
+            {
+                var envelopeTransform = envelope.Transform;
+
+                foreach (var solid in envelope.Representation.SolidOperations)
+                {
+                    var analysisObject = new SolidAnalysisObject(solid, envelopeTransform);
+                    list.Add(analysisObject);
+                }
+            }
+
+            return list;
+        }
+
         public static List<SolidAnalysisObject> MakeFromMeshElements(List<MeshElement> meshElements)
         {
             var list = new List<SolidAnalysisObject>();
