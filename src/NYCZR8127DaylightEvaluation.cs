@@ -52,18 +52,20 @@ namespace NYCZR8127DaylightEvaluation
 
             model.AddElement(new ModelCurve(siteRect, name: "Site Bounds Used"));
 
+            GeoUtilities.Model = model;
             Diagram.Model = model;
             SolidAnalysisObject.Model = model;
             SolidAnalysisObject.SkipSubdivide = input.SkipSubdivide;
 
             var analysisObjects = SolidAnalysisObject.MakeFromEnvelopes(envelopes);
 
-            foreach(var analysisObject in SolidAnalysisObject.MakeFromMeshes(meshElements.Select(meshElement => meshElement.Mesh).ToList())) {
+            foreach (var analysisObject in SolidAnalysisObject.MakeFromMeshes(meshElements.Select(meshElement => meshElement.Mesh).ToList()))
+            {
                 analysisObjects.Add(analysisObject);
             }
 
             // Only applicable for E Midtown
-            List<Envelope> envelopesForBlockage = input.QualifyForEastMidtownSubdistrict ? getEastMidtownEnvelopes(envelopes, model) : null;
+            List<Envelope> envelopesForBlockage = input.QualifyForEastMidtownSubdistrict ? getEastMidtownEnvelopes(envelopes, model, input.DebugVisualization) : null;
             var analysisObjectsForBlockage = input.QualifyForEastMidtownSubdistrict ? SolidAnalysisObject.MakeFromEnvelopes(envelopesForBlockage) : null;
 
             var margin = 20;
@@ -165,7 +167,7 @@ namespace NYCZR8127DaylightEvaluation
             return items;
         }
 
-        private static List<Envelope> getEastMidtownEnvelopes(List<Envelope> envelopes, Model model)
+        private static List<Envelope> getEastMidtownEnvelopes(List<Envelope> envelopes, Model model, Boolean showDebugGeometry)
         {
             var up = new Vector3(0, 0, 1);
             var cutHeight = Units.FeetToMeters(150.0);
@@ -189,46 +191,7 @@ namespace NYCZR8127DaylightEvaluation
                 }
                 else
                 {
-                    Polygon profile = null;
-
-                    foreach (var solidOp in envelope.Representation.SolidOperations)
-                    {
-                        var intersections = new List<Vector3>();
-
-                        foreach (var face in solidOp.Solid.Faces)
-                        {
-                            var polygon = face.Value.Outer.ToPolygon();
-                            foreach (var segment in polygon.Segments())
-                            {
-                                if (segment.Intersects(plane, out var intersection))
-                                {
-                                    intersections.Add(intersection);
-                                }
-                            }
-                            if (intersections.Count >= 3)
-                            {
-                                profile = ConvexHull.FromPoints(intersections);
-                                profile = profile.Project(new Plane(new Vector3(), Vector3.ZAxis));
-                            }
-                            else if (intersections.Count > 0)
-                            {
-                                Console.WriteLine($"Failed to intersect polygon for East Midtown: Found {intersections.Count} point");
-                            }
-                        }
-                    }
-
-                    if (profile != null)
-                    {
-                        var extrude1 = new Elements.Geometry.Solids.Extrude(profile, cutHeight, up, false);
-                        var rep1 = new Representation(new List<Elements.Geometry.Solids.SolidOperation>() { extrude1 });
-                        var env1 = new Envelope(profile, 0, cutHeight, up, 0, new Transform(), envelope.Material, rep1, false, Guid.NewGuid(), "");
-                        envelopesForBlockage.Add(env1);
-
-                        var extrude2 = new Elements.Geometry.Solids.Extrude(profile, top - cutHeight, up, false);
-                        var rep2 = new Representation(new List<Elements.Geometry.Solids.SolidOperation>() { extrude2 });
-                        var env2 = new Envelope(profile, cutHeight, top - cutHeight, up, 0, new Transform(new Vector3(0, 0, cutHeight)), envelope.Material, rep2, false, Guid.NewGuid(), "");
-                        envelopesForBlockage.Add(env2);
-                    }
+                    envelopesForBlockage.AddRange(GeoUtilities.SliceAtHeight(envelope, cutHeight, showDebugGeometry));
                 }
             }
 
