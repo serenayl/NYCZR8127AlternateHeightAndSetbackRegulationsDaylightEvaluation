@@ -574,8 +574,8 @@ namespace NYCZR8127DaylightEvaluation
                 return new List<Polygon>();
             }
 
-           // Raw angle polygon(s), from which we will run our calculations
-           var unionedRawPolygons = new List<Polygon>(Polygon.UnionAll(rawPolygons));
+            // Raw angle polygon(s), from which we will run our calculations
+            var unionedRawPolygons = new List<Polygon>(Polygon.UnionAll(rawPolygons));
 
             drawSilhouettes = useRawAngles ? unionedRawPolygons : new List<Polygon>(Polygon.UnionAll(drawPolygons));
 
@@ -799,13 +799,33 @@ namespace NYCZR8127DaylightEvaluation
             }
             var credit = 0.0;
 
-            foreach (var rawSilhouette in rawSilhouettes)
+            var excludedSquares = new Dictionary<(double, double), Square>();
+
+            Func<Square, bool> excludeSquare = (Square square) =>
             {
+                if (!excludedSquares.ContainsKey(square.Id))
+                {
+                    excludedSquares.Add(square.Id, square);
+                }
+                return true;
+            };
+
+            for (int i = 0; i < rawSilhouettes.Count; i++)
+            {
+                var rawSilhouette = rawSilhouettes[i];
+
                 foreach (var square in this.SquaresBelowCutoff.Values)
                 {
+                    if (excludedSquares.ContainsKey(square.Id))
+                    {
+                        // This was already removed in an earlier loop through rawSilhouettes
+                        continue;
+                    }
+
                     if (square.PotentialScore <= 0.0)
                     {
                         // Not applicable to daylight credit
+                        excludeSquare(square);
                         continue;
                     }
 
@@ -814,6 +834,7 @@ namespace NYCZR8127DaylightEvaluation
                     if (contains)
                     {
                         // No credit
+                        excludeSquare(square);
                         continue;
                     }
 
@@ -824,12 +845,15 @@ namespace NYCZR8127DaylightEvaluation
                         if (subIntersects)
                         {
                             // No credit
+                            excludeSquare(square);
                             continue;
                         }
 
-                        subSquares.Add(subSquare);
-
-                        credit += subSquare.PotentialScore;
+                        if (i == rawSilhouettes.Count - 1)
+                        {
+                            subSquares.Add(subSquare);
+                            credit += subSquare.PotentialScore;
+                        }
                     }
                 }
             }
