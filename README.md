@@ -21,7 +21,7 @@ This function is the result of a collaboration between Serena Li and Luis Felipe
 |Qualify for East Midtown Subdistrict|boolean|Whether your site is subject to the height and setback modifications specified in section 81-663. Modifications made: - Daylight blockage will be calculated at the intersection of 150' height projected downward, and using the input building from 150' upward. - There will be no encroachment penalty - Daylight credit will be given even if street continuity is on.|
 |Skip Subdivide|boolean|Skip the portion of the code that subdivides your non-vertical edges into the 10' segments as specified by the code. Use this if your analysis is taking too long or timing out. Results will be less visually accurate and possibly less numerically accurate, but should give you a reasonable estimate of results. Use this with 'Debug Visualization' on in order to minimize difference between visual and numbers.|
 |Vantage Streets|array|A list of vantage streets to calculate for.|
-|Debug Visualization|boolean|Visualize raw plan and section angles, rather than curved projections on a modified vertical scale. This is the grid and projection that is actually used to calculate all intersections and numbers, while the final curved version is for display.|
+|Debug Visualization|boolean|Visualize raw plan and section angles, rather than curved projections on a modified vertical scale. This is the grid and projection that is actually used to calculate all intersections and numbers, while the final curved version is for display. If East Midtown setting is on, this additionally displays the envelope(s) used to calculate blockages above 70 degrees in the chart.|
 
 
 <br>

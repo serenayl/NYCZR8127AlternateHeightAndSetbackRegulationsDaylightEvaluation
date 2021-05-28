@@ -60,7 +60,7 @@ namespace NYCZR8127DaylightEvaluation
         [Newtonsoft.Json.JsonProperty("Vantage Streets", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public IList<VantageStreets> VantageStreets { get; set; }
     
-        /// <summary>Visualize raw plan and section angles, rather than curved projections on a modified vertical scale. This is the grid and projection that is actually used to calculate all intersections and numbers, while the final curved version is for display.</summary>
+        /// <summary>Visualize raw plan and section angles, rather than curved projections on a modified vertical scale. This is the grid and projection that is actually used to calculate all intersections and numbers, while the final curved version is for display. If East Midtown setting is on, this additionally displays the envelope(s) used to calculate blockages above 70 degrees in the chart.</summary>
         [Newtonsoft.Json.JsonProperty("Debug Visualization", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public bool DebugVisualization { get; set; }
     

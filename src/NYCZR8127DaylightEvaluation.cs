@@ -35,13 +35,16 @@ namespace NYCZR8127DaylightEvaluation
             }
 
             var siteInput = getSite(siteModel);
-            var envelopes = getEnvelopes(envelopeModel);
+            var envelopes = getElementsOfType<Envelope>(envelopeModel);
+            var rhinoBreps = getElementsOfType<RhinoBrep>(envelopeModel);
+            var rhinoExtrusions = getElementsOfType<RhinoExtrusion>(envelopeModel);
+            var meshEnvelopes = getElementsOfType<MeshElement>(envelopeModel);
 
             if (siteInput == null)
             {
                 throw new ArgumentException("There were no sites found. Please make sure you either meet the dependency of 'Site' or the dependency of 'EnvelopeAndSite."); throw new ArgumentException("BOOO SITE IS NOT FOUND");
             }
-            if (envelopes == null || envelopes.Count < 1)
+            if ((envelopes == null || envelopes.Count < 1) && (meshEnvelopes == null || meshEnvelopes.Count < 1) && (rhinoBreps == null || rhinoBreps.Count < 1) && (rhinoExtrusions == null || rhinoExtrusions.Count < 1))
             {
                 throw new ArgumentException("There were no envelopes found. Please make sure you either meet the dependency of 'Envelope' or the dependency of 'EnvelopeAndSite.");
             }
@@ -51,15 +54,30 @@ namespace NYCZR8127DaylightEvaluation
 
             model.AddElement(new ModelCurve(siteRect, name: "Site Bounds Used"));
 
+            GeoUtilities.Model = model;
             Diagram.Model = model;
             SolidAnalysisObject.Model = model;
             SolidAnalysisObject.SkipSubdivide = input.SkipSubdivide;
 
             var analysisObjects = SolidAnalysisObject.MakeFromEnvelopes(envelopes);
 
+            foreach (var analysisObject in SolidAnalysisObject.MakeFromMeshElements(meshEnvelopes))
+            {
+                analysisObjects.Add(analysisObject);
+            }
+
+            foreach (var analysisObject in SolidAnalysisObject.MakeFromRhinoBreps(rhinoBreps))
+            {
+                analysisObjects.Add(analysisObject);
+            }
+
+            foreach (var analysisObject in SolidAnalysisObject.MakeFromRhinoExtrusions(rhinoExtrusions))
+            {
+                analysisObjects.Add(analysisObject);
+            }
+
             // Only applicable for E Midtown
-            List<Envelope> envelopesForBlockage = input.QualifyForEastMidtownSubdistrict ? getEastMidtownEnvelopes(envelopes, model) : null;
-            var analysisObjectsForBlockage = input.QualifyForEastMidtownSubdistrict ? SolidAnalysisObject.MakeFromEnvelopes(envelopesForBlockage) : null;
+            List<SolidAnalysisObject> analysisObjectsForBlockage = input.QualifyForEastMidtownSubdistrict ? getEastMidtownEnvelopes(envelopes, rhinoBreps, rhinoExtrusions, meshEnvelopes, model, input.DebugVisualization) : null;
 
             var margin = 20;
             var vsIndex = 0;
@@ -139,35 +157,36 @@ namespace NYCZR8127DaylightEvaluation
         // Grab the biggest site's bounding box from the model
         private static Site getSite(Model model)
         {
-            if (model == null)
+            var sites = getElementsOfType<Site>(model);
+            if (sites == null)
             {
                 return null;
             }
-            var sites = new List<Site>();
-            sites.AddRange(model.AllElementsOfType<Site>());
             sites = sites.OrderByDescending(e => e.Perimeter.Area()).ToList();
             var site = sites[0];
             return site;
         }
 
-        // Grab envelopes from the model
-        private static List<Envelope> getEnvelopes(Model model)
+        private static List<T> getElementsOfType<T>(Model model)
         {
             if (model == null)
             {
                 return null;
             }
-            var envelopes = new List<Envelope>();
-            envelopes.AddRange(model.AllElementsOfType<Envelope>());
-            return envelopes;
+            var items = new List<T>();
+            items.AddRange(model.AllElementsOfType<T>());
+            return items;
         }
 
-        private static List<Envelope> getEastMidtownEnvelopes(List<Envelope> envelopes, Model model)
+        private static List<SolidAnalysisObject> getEastMidtownEnvelopes(List<Envelope> envelopes, List<RhinoBrep> rhinoBreps, List<RhinoExtrusion> rhinoExtrusions, List<MeshElement> meshEnvelopes, Model model, Boolean showDebugGeometry)
         {
+            var analysisObjects = new List<SolidAnalysisObject>();
+
             var up = new Vector3(0, 0, 1);
             var cutHeight = Units.FeetToMeters(150.0);
             var plane = new Plane(new Vector3(0, 0, cutHeight), Vector3.ZAxis);
             var envelopesForBlockage = new List<Envelope>();
+            var meshElementsForBlockage = new List<MeshElement>();
 
             foreach (var envelope in envelopes)
             {
@@ -182,54 +201,50 @@ namespace NYCZR8127DaylightEvaluation
                 if (bottom >= cutHeight)
                 {
                     // envelope is above the cutoff, use as-is
-                    envelopesForBlockage.Add(envelope);
+                    analysisObjects.AddRange(SolidAnalysisObject.MakeFromEnvelopes(new List<Envelope>() { envelope }));
                 }
                 else
                 {
-                    Polygon profile = null;
-
-                    foreach (var solidOp in envelope.Representation.SolidOperations)
-                    {
-                        var intersections = new List<Vector3>();
-
-                        foreach (var face in solidOp.Solid.Faces)
-                        {
-                            var polygon = face.Value.Outer.ToPolygon();
-                            foreach (var segment in polygon.Segments())
-                            {
-                                if (segment.Intersects(plane, out var intersection))
-                                {
-                                    intersections.Add(intersection);
-                                }
-                            }
-                            if (intersections.Count >= 3)
-                            {
-                                profile = ConvexHull.FromPoints(intersections);
-                                profile = profile.Project(new Plane(new Vector3(), Vector3.ZAxis));
-                            }
-                            else if (intersections.Count > 0)
-                            {
-                                Console.WriteLine($"Failed to intersect polygon for East Midtown: Found {intersections.Count} point");
-                            }
-                        }
-                    }
-
-                    if (profile != null)
-                    {
-                        var extrude1 = new Elements.Geometry.Solids.Extrude(profile, cutHeight, up, false);
-                        var rep1 = new Representation(new List<Elements.Geometry.Solids.SolidOperation>() { extrude1 });
-                        var env1 = new Envelope(profile, 0, cutHeight, up, 0, new Transform(), envelope.Material, rep1, false, Guid.NewGuid(), "");
-                        envelopesForBlockage.Add(env1);
-
-                        var extrude2 = new Elements.Geometry.Solids.Extrude(profile, top - cutHeight, up, false);
-                        var rep2 = new Representation(new List<Elements.Geometry.Solids.SolidOperation>() { extrude2 });
-                        var env2 = new Envelope(profile, cutHeight, top - cutHeight, up, 0, new Transform(new Vector3(0, 0, cutHeight)), envelope.Material, rep2, false, Guid.NewGuid(), "");
-                        envelopesForBlockage.Add(env2);
-                    }
+                    envelopesForBlockage.AddRange(GeoUtilities.SliceAtHeight(envelope, cutHeight, showDebugGeometry));
                 }
             }
 
-            return envelopesForBlockage;
+            foreach (var rhinoBrep in rhinoBreps)
+            {
+                envelopesForBlockage.AddRange(GeoUtilities.SliceAtHeight(rhinoBrep, cutHeight, showDebugGeometry));
+            }
+
+            foreach (var rhinoExtrusion in rhinoExtrusions)
+            {
+                envelopesForBlockage.AddRange(GeoUtilities.SliceAtHeight(rhinoExtrusion, cutHeight, showDebugGeometry));
+            }
+
+            foreach (var meshElement in meshEnvelopes)
+            {
+                var bbox = new BBox3(GeoUtilities.TransformedVertices(meshElement.Mesh.Vertices, meshElement.Transform));
+                var bottom = bbox.Min.Z;
+                var top = bbox.Max.Z;
+
+                if (top < cutHeight)
+                {
+                    continue;
+                }
+
+                if (bottom >= cutHeight)
+                {
+                    // envelope is above the cutoff, use as-is
+                    meshElementsForBlockage.Add(meshElement);
+                }
+                else
+                {
+                    envelopesForBlockage.AddRange(GeoUtilities.SliceAtHeight(meshElement, cutHeight, showDebugGeometry));
+                }
+            }
+
+            analysisObjects.AddRange(SolidAnalysisObject.MakeFromEnvelopes(envelopesForBlockage));
+            analysisObjects.AddRange(SolidAnalysisObject.MakeFromMeshElements(meshElementsForBlockage));
+
+            return analysisObjects;
         }
     }
 }

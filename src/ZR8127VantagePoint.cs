@@ -60,7 +60,7 @@ namespace NYCZR8127DaylightEvaluation
 
             this.sPlane = new Plane(point, ninetyDegreeDirection);
 
-            if (startDirection.PlaneAngleTo(ninetyDegreeDirection) == 90)
+            if (Math.Abs(90 - startDirection.PlaneAngleTo(ninetyDegreeDirection)) < Vector3.EPSILON)
             {
                 this.dPlane = new Plane(point, startDirection);
             }
