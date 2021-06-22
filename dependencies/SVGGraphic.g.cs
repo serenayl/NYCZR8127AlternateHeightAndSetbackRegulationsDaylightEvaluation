@@ -26,7 +26,7 @@ namespace Elements
     public partial class SVGGraphic : Element
     {
         [Newtonsoft.Json.JsonConstructor]
-        public SVGGraphic(string @content, System.Guid @id, string @name)
+        public SVGGraphic(string @content, System.Guid @id = default, string @name = null)
             : base(id, name)
         {
             var validator = Validator.Instance.GetFirstValidatorForType<SVGGraphic>();

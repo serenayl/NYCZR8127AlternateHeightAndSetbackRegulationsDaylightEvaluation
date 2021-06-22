@@ -26,7 +26,7 @@ namespace Elements
     public partial class DaylightEvaluationVantagePoint : Element
     {
         [Newtonsoft.Json.JsonConstructor]
-        public DaylightEvaluationVantagePoint(Vector3 @position, double @daylightBlockage, double @unblockedDaylightCredit, double @profileDaylightBlockage, double @availableDaylight, double @daylightRemaining, double @daylightScore, System.Guid @id, string @name)
+        public DaylightEvaluationVantagePoint(Vector3 @position, double @daylightBlockage, double @unblockedDaylightCredit, double @profileDaylightBlockage, double @availableDaylight, double @daylightRemaining, double @daylightScore, System.Guid @id = default, string @name = null)
             : base(id, name)
         {
             var validator = Validator.Instance.GetFirstValidatorForType<DaylightEvaluationVantagePoint>();

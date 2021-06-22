@@ -26,7 +26,7 @@ namespace Elements
     public partial class RhinoImportElement : GeometricElement
     {
         [Newtonsoft.Json.JsonConstructor]
-        public RhinoImportElement(Profile @profile, System.Guid @rhinoObjectId, bool @assignableRhinoObject, Transform @transform, Material @material, Representation @representation, bool @isElementDefinition, System.Guid @id, string @name)
+        public RhinoImportElement(Profile @profile, System.Guid @rhinoObjectId, bool @assignableRhinoObject, Transform @transform = null, Material @material = null, Representation @representation = null, bool @isElementDefinition = false, System.Guid @id = default, string @name = null)
             : base(transform, material, representation, isElementDefinition, id, name)
         {
             var validator = Validator.Instance.GetFirstValidatorForType<RhinoImportElement>();

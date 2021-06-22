@@ -27,7 +27,7 @@ namespace NYCZR8127DaylightEvaluation
 
         public static Vector3 TransformedPoint(Vector3 point, Transform transform)
         {
-            return transform != null ? transform.OfVector(point) : point;
+            return transform != null ? transform.OfPoint(point) : point;
         }
 
         public static List<Envelope> SliceAtHeight(MeshElement meshElement, double cutHeight, Boolean showDebugGeometry)
@@ -79,22 +79,25 @@ namespace NYCZR8127DaylightEvaluation
 
             var plane = new Plane(new Vector3(0, 0, cutHeight), Vector3.ZAxis);
             var top = envelope.Elevation + envelope.Height;
-
             var envelopesForBlockage = new List<Envelope>();
+            var newUpperSolids = new List<Elements.Geometry.Solids.SolidOperation>();
 
             Polygon slice = null;
-
-            var newUpperSolids = new List<Elements.Geometry.Solids.SolidOperation>();
 
             foreach (var solidOp in envelope.Representation.SolidOperations)
             {
                 var intersections = new List<Vector3>();
-
                 var newUpperSolid = new Elements.Geometry.Solids.Solid();
 
                 foreach (var face in solidOp.Solid.Faces)
                 {
                     var polygon = face.Value.Outer.ToPolygon();
+                    if(solidOp.LocalTransform!=null) {
+                        polygon = (Polygon)polygon.Transformed(solidOp.LocalTransform);
+                    }
+                    if(envelope.Transform!=null) {
+                        polygon = (Polygon)polygon.Transformed(envelope.Transform);
+                    }
 
                     var faceIntersections = new List<Vector3>();
 
