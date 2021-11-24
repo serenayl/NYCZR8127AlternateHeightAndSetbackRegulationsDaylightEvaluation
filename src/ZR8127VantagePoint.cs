@@ -247,10 +247,26 @@ namespace NYCZR8127DaylightEvaluation
                 foreach (var vp in orderedStreetVantagePts)
                 {
                     var nearPointOnNearLot = new List<Vector3>() { vp.NearLotLine.Start, vp.NearLotLine.End }.OrderBy(pt => pt.DistanceTo(vp.Point)).ToList()[0];
-                    // Move intersection point of the near lot line and front lot line
-                    // towards the rear, to the lesser of 100' or the centerline of the block from the front lot line
-                    var pointForBounds = nearPointOnNearLot + vp.FrontDirection * Math.Min(Units.FeetToMeters(100), Units.FeetToMeters(vantageStreet.BlockDepthInFeet / 2));
-                    vp.DaylightBoundariesPoints[1] = pointForBounds;
+                    var frontageLength = vp.FrontLotLine.Length();
+                    if (frontageLength > VantageDistance)
+                    {
+                        // 81-275 Special Conditions a.1: length of street frontage > 250ft and < 500ft
+                        // If > 500ft, we would've had 3 vantage points so we wouldn't have reached this point.
+                        vp.DaylightBoundariesPoints[1] = nearPointOnNearLot;
+                    }
+                    else
+                    {
+                        // 81-273f:
+                        // Draw a vertical line on the chart rising from the intersection of the near lot line of the zoning lot
+                        // with the center line of the block or with a line 100 feet distant from and parallel to the front lot line on the vantage street,
+                        // whichever line is closer to the vantage street.
+                        // This line and the far lot line represent the boundaries of the potential sky area that the building could block.
+
+                        // Move intersection point of the near lot line and front lot line
+                        // towards the rear, to the lesser of 100' or the centerline of the block from the front lot line
+                        var pointForBounds = nearPointOnNearLot + vp.FrontDirection * Math.Min(Units.FeetToMeters(100), Units.FeetToMeters(vantageStreet.BlockDepthInFeet / 2));
+                        vp.DaylightBoundariesPoints[1] = pointForBounds;
+                    }
                 }
             }
 

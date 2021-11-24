@@ -29,12 +29,6 @@ namespace Elements
         public DaylightEvaluationVantagePoint(Vector3 @position, double @daylightBlockage, double @unblockedDaylightCredit, double @profileDaylightBlockage, double @availableDaylight, double @daylightRemaining, double @daylightScore, System.Guid @id = default, string @name = null)
             : base(id, name)
         {
-            var validator = Validator.Instance.GetFirstValidatorForType<DaylightEvaluationVantagePoint>();
-            if(validator != null)
-            {
-                validator.PreConstruct(new object[]{ @position, @daylightBlockage, @unblockedDaylightCredit, @profileDaylightBlockage, @availableDaylight, @daylightRemaining, @daylightScore, @id, @name});
-            }
-        
             this.Position = @position;
             this.DaylightBlockage = @daylightBlockage;
             this.UnblockedDaylightCredit = @unblockedDaylightCredit;
@@ -42,16 +36,18 @@ namespace Elements
             this.AvailableDaylight = @availableDaylight;
             this.DaylightRemaining = @daylightRemaining;
             this.DaylightScore = @daylightScore;
-            
-            if(validator != null)
-            {
-                validator.PostConstruct(this);
             }
+        
+        // Empty constructor
+        public DaylightEvaluationVantagePoint()
+            : base()
+        {
         }
     
         /// <summary>The position of the vantage point.</summary>
-        [Newtonsoft.Json.JsonProperty("Position", Required = Newtonsoft.Json.Required.AllowNull)]
-        public Vector3 Position { get; set; }
+        [Newtonsoft.Json.JsonProperty("Position", Required = Newtonsoft.Json.Required.Always)]
+        [System.ComponentModel.DataAnnotations.Required]
+        public Vector3 Position { get; set; } = new Vector3();
     
         /// <summary>Count the number of blocked daylight squares and subsquares which are above the curved line representing an elevation of 70 degrees. A negative sign is to be given to this number.</summary>
         [Newtonsoft.Json.JsonProperty("DaylightBlockage", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]

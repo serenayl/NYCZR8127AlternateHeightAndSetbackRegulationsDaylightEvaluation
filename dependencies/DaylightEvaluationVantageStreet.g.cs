@@ -29,20 +29,15 @@ namespace Elements
         public DaylightEvaluationVantageStreet(double @score, double @numberOfVantagePoints, double @centerlineDistance, System.Guid @id = default, string @name = null)
             : base(id, name)
         {
-            var validator = Validator.Instance.GetFirstValidatorForType<DaylightEvaluationVantageStreet>();
-            if(validator != null)
-            {
-                validator.PreConstruct(new object[]{ @score, @numberOfVantagePoints, @centerlineDistance, @id, @name});
-            }
-        
             this.Score = @score;
             this.NumberOfVantagePoints = @numberOfVantagePoints;
             this.CenterlineDistance = @centerlineDistance;
-            
-            if(validator != null)
-            {
-                validator.PostConstruct(this);
             }
+        
+        // Empty constructor
+        public DaylightEvaluationVantageStreet()
+            : base()
+        {
         }
     
         /// <summary>Score for the street.</summary>

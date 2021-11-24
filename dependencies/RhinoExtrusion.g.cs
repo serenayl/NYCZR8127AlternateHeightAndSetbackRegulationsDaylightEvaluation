@@ -29,17 +29,12 @@ namespace Elements
         public RhinoExtrusion(Profile @profile, System.Guid @rhinoObjectId, bool @assignableRhinoObject, Transform @transform, Material @material, Representation @representation, bool @isElementDefinition, System.Guid @id, string @name)
             : base(profile, rhinoObjectId, assignableRhinoObject, transform, material, representation, isElementDefinition, id, name)
         {
-            var validator = Validator.Instance.GetFirstValidatorForType<RhinoExtrusion>();
-            if(validator != null)
-            {
-                validator.PreConstruct(new object[]{ @profile, @rhinoObjectId, @assignableRhinoObject, @transform, @material, @representation, @isElementDefinition, @id, @name});
             }
         
-            
-            if(validator != null)
-            {
-                validator.PostConstruct(this);
-            }
+        // Empty constructor
+        public RhinoExtrusion()
+            : base()
+        {
         }
     
     

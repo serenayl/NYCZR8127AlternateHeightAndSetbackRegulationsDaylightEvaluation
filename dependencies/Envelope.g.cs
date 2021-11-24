@@ -29,22 +29,17 @@ namespace Elements
         public Envelope(Profile @profile, double @elevation, double @height, Vector3 @direction, double @rotation, Transform @transform = null, Material @material = null, Representation @representation = null, bool @isElementDefinition = false, System.Guid @id = default, string @name = null)
             : base(transform, material, representation, isElementDefinition, id, name)
         {
-            var validator = Validator.Instance.GetFirstValidatorForType<Envelope>();
-            if(validator != null)
-            {
-                validator.PreConstruct(new object[]{ @profile, @elevation, @height, @direction, @rotation, @transform, @material, @representation, @isElementDefinition, @id, @name});
-            }
-        
             this.Profile = @profile;
             this.Elevation = @elevation;
             this.Height = @height;
             this.Direction = @direction;
             this.Rotation = @rotation;
-            
-            if(validator != null)
-            {
-                validator.PostConstruct(this);
             }
+        
+        // Empty constructor
+        public Envelope()
+            : base()
+        {
         }
     
         /// <summary>The profile to extrude.</summary>

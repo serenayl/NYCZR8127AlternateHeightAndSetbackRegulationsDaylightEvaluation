@@ -29,18 +29,13 @@ namespace Elements
         public SVGGraphic(string @content, System.Guid @id = default, string @name = null)
             : base(id, name)
         {
-            var validator = Validator.Instance.GetFirstValidatorForType<SVGGraphic>();
-            if(validator != null)
-            {
-                validator.PreConstruct(new object[]{ @content, @id, @name});
+            this.Content = @content;
             }
         
-            this.Content = @content;
-            
-            if(validator != null)
-            {
-                validator.PostConstruct(this);
-            }
+        // Empty constructor
+        public SVGGraphic()
+            : base()
+        {
         }
     
         /// <summary>The raw SVG content</summary>

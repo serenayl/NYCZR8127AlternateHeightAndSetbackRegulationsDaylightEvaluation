@@ -29,20 +29,15 @@ namespace Elements
         public RhinoImportElement(Profile @profile, System.Guid @rhinoObjectId, bool @assignableRhinoObject, Transform @transform = null, Material @material = null, Representation @representation = null, bool @isElementDefinition = false, System.Guid @id = default, string @name = null)
             : base(transform, material, representation, isElementDefinition, id, name)
         {
-            var validator = Validator.Instance.GetFirstValidatorForType<RhinoImportElement>();
-            if(validator != null)
-            {
-                validator.PreConstruct(new object[]{ @profile, @rhinoObjectId, @assignableRhinoObject, @transform, @material, @representation, @isElementDefinition, @id, @name});
-            }
-        
             this.Profile = @profile;
             this.RhinoObjectId = @rhinoObjectId;
             this.AssignableRhinoObject = @assignableRhinoObject;
-            
-            if(validator != null)
-            {
-                validator.PostConstruct(this);
             }
+        
+        // Empty constructor
+        public RhinoImportElement()
+            : base()
+        {
         }
     
         /// <summary>A base profile.</summary>
