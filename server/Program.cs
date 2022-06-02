@@ -1,7 +1,9 @@
 
+using System;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace Hypar.Server
 {
@@ -11,7 +13,7 @@ namespace Hypar.Server
         {
             await HyparServer.StartAsync(
                 args,
-                Path.GetFullPath(Path.Combine(@"/Users/serenali/Hypar Dropbox/Serena Li/Functions/Daylight Evaluation Functions/CSharpVersion/NYCZR8127DaylightEvaluation/server", "..")),
+                Path.GetFullPath(Path.Combine(Assembly.GetExecutingAssembly().Location, "../../../../..")),
                 typeof(NYCZR8127DaylightEvaluation.Function),
                 typeof(NYCZR8127DaylightEvaluation.NYCZR8127DaylightEvaluationInputs));
         }

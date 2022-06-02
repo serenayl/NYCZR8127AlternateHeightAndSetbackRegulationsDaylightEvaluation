@@ -11,6 +11,7 @@ using Elements.Serialization.JSON;
 using Hypar.Functions;
 using Hypar.Functions.Execution;
 using Hypar.Functions.Execution.AWS;
+using Hypar.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -58,12 +59,12 @@ namespace NYCZR8127DaylightEvaluation
     
         /// <summary>A list of vantage streets to calculate for.</summary>
         [Newtonsoft.Json.JsonProperty("Vantage Streets", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [System.ComponentModel.DataAnnotations.MinLength(1)]
         public IList<VantageStreets> VantageStreets { get; set; }
     
         /// <summary>Visualize raw plan and section angles, rather than curved projections on a modified vertical scale. This is the grid and projection that is actually used to calculate all intersections and numbers, while the final curved version is for display. If East Midtown setting is on, this additionally displays the envelope(s) used to calculate blockages above 70 degrees in the chart.</summary>
         [Newtonsoft.Json.JsonProperty("Debug Visualization", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public bool DebugVisualization { get; set; }
-    
     
     }
     
@@ -124,8 +125,6 @@ namespace NYCZR8127DaylightEvaluation
             get { return _additionalProperties; }
             set { _additionalProperties = value; }
         }
-    
-    
     }
     
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "10.1.21.0 (Newtonsoft.Json v12.0.0.0)")]

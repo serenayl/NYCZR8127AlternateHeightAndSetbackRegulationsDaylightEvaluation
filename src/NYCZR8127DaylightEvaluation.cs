@@ -167,7 +167,7 @@ namespace NYCZR8127DaylightEvaluation
             return site;
         }
 
-        private static List<T> getElementsOfType<T>(Model model)
+        private static List<T> getElementsOfType<T>(Model model) where T: Elements.Element
         {
             if (model == null)
             {

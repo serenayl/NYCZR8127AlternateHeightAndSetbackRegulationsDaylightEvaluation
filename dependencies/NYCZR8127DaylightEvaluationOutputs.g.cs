@@ -14,7 +14,7 @@ using System.Collections.Generic;
 
 namespace NYCZR8127DaylightEvaluation
 {
-    public class NYCZR8127DaylightEvaluationOutputs: ResultsBase
+    public class NYCZR8127DaylightEvaluationOutputs: SystemResults
     {
 		/// <summary>
 		/// A number below 66 means this design is not passing
