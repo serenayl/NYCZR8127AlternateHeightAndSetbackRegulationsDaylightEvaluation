@@ -94,7 +94,7 @@ namespace NYCZR8127DaylightEvaluation
 
             foreach (var vantageStreet in input.VantageStreets)
             {
-                var vantagePoints = VantagePoint.GetVantagePoints(siteRect, vantageStreet, model);
+                var outputVantageStreet = VantageElementUtils.CreateVantageStreet(siteRect, vantageStreet, out var vantagePoints, model);
 
                 int vpIndex = 0;
 
@@ -106,8 +106,8 @@ namespace NYCZR8127DaylightEvaluation
 
                     vp.Diagram.Draw(name, model, analysisObjects, input, input.DebugVisualization, analysisObjectsForBlockage: analysisObjectsForBlockage);
 
-                    var outputVp = new DaylightEvaluationVantagePoint(vp.Point, vp.Diagram.DaylightBlockage, vp.Diagram.UnblockedDaylightCredit, vp.Diagram.ProfilePenalty, vp.Diagram.AvailableDaylight, vp.Diagram.DaylightRemaining, vp.Diagram.DaylightScore, Guid.NewGuid(), name);
-                    model.AddElement(outputVp);
+                    // var outputVp = new NYCDaylightEvaluationVantagePoint(vp.Point, vp.Diagram.DaylightBlockage, vp.Diagram.UnblockedDaylightCredit, vp.Diagram.ProfilePenalty, vp.Diagram.AvailableDaylight, vp.Diagram.DaylightRemaining, vp.Diagram.DaylightScore, name: name);
+                    // model.AddElement(outputVp);
 
                     vpIndex += 1;
                 }
@@ -120,7 +120,7 @@ namespace NYCZR8127DaylightEvaluation
                 streetLengths += vantageStreetLength;
                 streetScoresTimesLengths += vantageStreetScore * vantageStreetLength;
 
-                var outputVantageStreet = new DaylightEvaluationVantageStreet(vantageStreetScore, vantagePoints.Count, vantagePoints[0].CenterlineOffsetDist, Guid.NewGuid(), vantageStreet.Name);
+                outputVantageStreet.Score = vantageStreetScore;
                 model.AddElement(outputVantageStreet);
 
                 vsIndex += 1;

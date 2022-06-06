@@ -19,12 +19,10 @@ namespace NYCZR8127DaylightEvaluation
     }
     public class VantagePoint
     {
-        public VantageStreets VantageStreet;
+        public NYCDaylightEvaluationVantageStreet VantageStreet;
         public Vector3 Point;
         public Vector3 StartDirection;
         public Vector3 FrontDirection;
-
-        public double CenterlineOffsetDist;
         public Polyline Centerline;
         public Line NearLotLine;
         public Line FarLotLine;
@@ -44,19 +42,16 @@ namespace NYCZR8127DaylightEvaluation
         private static double longCenterlineLength = VantageDistance * 2;
 
         public VantagePoint(
-            VantageStreets vantageStreet,
+            NYCDaylightEvaluationVantageStreet vantageStreet,
             Vector3 point,
             Vector3 startDirection,
-            Vector3 ninetyDegreeDirection,
-            List<Line> lotLines,
-            double centerlineOffsetDist = 0.0
+            Vector3 ninetyDegreeDirection
         )
         {
             this.VantageStreet = vantageStreet;
             this.Point = point;
             this.StartDirection = startDirection;
             this.FrontDirection = ninetyDegreeDirection;
-            this.CenterlineOffsetDist = centerlineOffsetDist;
 
             this.sPlane = new Plane(point, ninetyDegreeDirection);
 
@@ -69,12 +64,16 @@ namespace NYCZR8127DaylightEvaluation
                 this.dPlane = new Plane(point, startDirection * -1);
             }
 
-            var lotLinesBySDist = new List<Line>(lotLines).OrderBy(line => this.GetS(line.PointAt(0.5))).ToList();
+            var lotLinesBySDist = new List<Line>(vantageStreet.LotLines).OrderBy(line => this.GetS(line.PointAt(0.5))).ToList();
 
             this.FrontLotLine = lotLinesBySDist[0];
             this.RearLotLine = lotLinesBySDist[3];
 
-            var move = -1 * this.FrontDirection * centerlineOffsetDist;
+            if (this.FrontLotLine != vantageStreet.FrontLotLine) {
+                throw new Exception("Front lot lines are not matching. Please contact the function author with this example!");
+            }
+
+            var move = -1 * this.FrontDirection * vantageStreet.CenterlineDistance;
             var points = new List<Vector3>() { this.FrontLotLine.Start + move, this.FrontLotLine.End + move };
             this.Centerline = new Polyline(points);
 
@@ -136,58 +135,39 @@ namespace NYCZR8127DaylightEvaluation
         }
 
         /// <summary>
-        /// Gets vantage points from a given centerline and near lot line.
-        /// Assumes that the centerline and the front lot line are parallel
+        /// Gets vantage points from a given vantage street.
+        /// Assumes that the outputVantageStreet.Centerline and the front lot line are parallel
         /// same-length offsets of each other.
         /// </summary>
-        /// <param name="centerline"></param>
-        /// <param name="frontLotLine"></param>
         /// <param name="model">Used to help debug visualizations</param>
         /// <returns></returns>
-        public static List<VantagePoint> GetVantagePoints(Polygon rectangularSite, VantageStreets vantageStreet, Model model = null)
+        public static List<VantagePoint> GetVantagePoints(NYCDaylightEvaluationVantageStreet outputVantageStreet, Model model = null)
         {
-            if (vantageStreet.Line == null)
-            {
-                throw new Exception("Each vantage street must have a line designating its rough location. Please draw a line outside of your lot that represents the centerline of your vantage street. It does not need to be straight or exactly parallel to the lot line, but it must exist.");
-            }
-            var siteCentroid = rectangularSite.Centroid();
-            var midpoint = vantageStreet.Line.PointAt(0.5);
-            var lotLines = new List<Line>(rectangularSite.Segments()).OrderBy(segment => midpoint.DistanceTo(segment.PointAt(0.5))).ToList();
-            var frontLotLine = lotLines[0];
-            var centerlineOffsetDist = Settings.CenterlineDistances[vantageStreet.Width] / 2;
-            var directionToStreet = new Vector3(frontLotLine.PointAt(0.5) - siteCentroid).Unitized() * centerlineOffsetDist;
-            var centerline = new Line(frontLotLine.Start + directionToStreet, frontLotLine.End + directionToStreet);
-
             var vantagePoints = new List<VantagePoint>();
-            var ninetyDegreeDirection = (frontLotLine.PointAt(0.5) - centerline.PointAt(0.5)).Unitized();
-
-            var hasThirdVantagePoint = centerline.Length() > longCenterlineLength;
+            var ninetyDegreeDirection = (outputVantageStreet.FrontLotLine.PointAt(0.5) - outputVantageStreet.Centerline.PointAt(0.5)).Unitized();
+            var hasThirdVantagePoint = outputVantageStreet.Centerline.Length() > longCenterlineLength;
 
             // VP 1
-            var base1 = new Vector3(centerline.Start);
-            var dir1 = new Vector3(centerline.End - centerline.Start).Unitized();
+            var base1 = new Vector3(outputVantageStreet.Centerline.Start);
+            var dir1 = new Vector3(outputVantageStreet.Centerline.End - outputVantageStreet.Centerline.Start).Unitized();
             var origin1 = base1 + (dir1 * VantageDistance);
             var vp1 = new VantagePoint(
-                vantageStreet,
+                outputVantageStreet,
                 origin1,
                 dir1 * -1,
-                ninetyDegreeDirection,
-                lotLines,
-                centerlineOffsetDist
+                ninetyDegreeDirection
             );
             vantagePoints.Add(vp1);
 
             // VP 2
-            var base2 = new Vector3(centerline.End);
-            var dir2 = new Vector3(centerline.Start - centerline.End).Unitized();
+            var base2 = new Vector3(outputVantageStreet.Centerline.End);
+            var dir2 = new Vector3(outputVantageStreet.Centerline.Start - outputVantageStreet.Centerline.End).Unitized();
             var origin2 = base2 + (dir2 * VantageDistance);
             var vp2 = new VantagePoint(
-                vantageStreet,
+                outputVantageStreet,
                 origin2,
                 dir2 * -1,
-                ninetyDegreeDirection,
-                lotLines,
-                centerlineOffsetDist
+                ninetyDegreeDirection
             );
             vantagePoints.Add(vp2);
 
@@ -197,17 +177,15 @@ namespace NYCZR8127DaylightEvaluation
                 var dir3 = dir1;
                 var origin3 = lineBetweenVps.PointAt(0.5);
                 var vp3 = new VantagePoint(
-                    vantageStreet,
+                    outputVantageStreet,
                     origin3,
                     dir3 * -1,
-                    ninetyDegreeDirection,
-                    lotLines,
-                    centerlineOffsetDist
+                    ninetyDegreeDirection
                 );
                 vantagePoints.Add(vp3);
             }
 
-            calculateDaylightBoundaries(vantageStreet, vantagePoints, model);
+            calculateDaylightBoundaries(outputVantageStreet, vantagePoints, model);
             foreach (var vp in vantagePoints)
             {
                 vp.Diagram.CalculateProfileCurvesAndBoundingSquares();
@@ -216,7 +194,7 @@ namespace NYCZR8127DaylightEvaluation
             // Visualize if we are able to
             if (model != null)
             {
-                model.AddElement(new ModelCurve(centerline));
+                model.AddElement(new ModelCurve(outputVantageStreet.Centerline));
 
                 foreach (var vp in vantagePoints)
                 {
@@ -229,7 +207,7 @@ namespace NYCZR8127DaylightEvaluation
             return vantagePoints;
         }
 
-        private static void calculateDaylightBoundaries(VantageStreets vantageStreet, List<VantagePoint> orderedStreetVantagePts, Model model = null)
+        private static void calculateDaylightBoundaries(NYCDaylightEvaluationVantageStreet vantageStreet, List<VantagePoint> orderedStreetVantagePts, Model model = null)
         {
             if (orderedStreetVantagePts.Count < 2 || orderedStreetVantagePts.Count > 3)
             {
@@ -238,7 +216,7 @@ namespace NYCZR8127DaylightEvaluation
 
             foreach (var vp in orderedStreetVantagePts.Take(2))
             {
-                var farPoint = vp.Point + (vp.StartDirection * VantageDistance) + (vp.FrontDirection * vp.CenterlineOffsetDist);
+                var farPoint = vp.Point + (vp.StartDirection * VantageDistance) + (vp.FrontDirection * vantageStreet.CenterlineDistance);
                 vp.DaylightBoundariesPoints[0] = farPoint;
             }
 
@@ -263,8 +241,8 @@ namespace NYCZR8127DaylightEvaluation
                         // This line and the far lot line represent the boundaries of the potential sky area that the building could block.
 
                         // Move intersection point of the near lot line and front lot line
-                        // towards the rear, to the lesser of 100' or the centerline of the block from the front lot line
-                        var pointForBounds = nearPointOnNearLot + vp.FrontDirection * Math.Min(Units.FeetToMeters(100), Units.FeetToMeters(vantageStreet.BlockDepthInFeet / 2));
+                        // towards the rear, to the lesser of 100' or the outputVantageStreet.Centerline of the block from the front lot line
+                        var pointForBounds = nearPointOnNearLot + vp.FrontDirection * Math.Min(Units.FeetToMeters(100), vp.VantageStreet.BlockDepth/2);
                         vp.DaylightBoundariesPoints[1] = pointForBounds;
                     }
                 }
@@ -274,7 +252,7 @@ namespace NYCZR8127DaylightEvaluation
             {
                 foreach (var vp in orderedStreetVantagePts.SkipLast(1))
                 {
-                    vp.DaylightBoundariesPoints[1] = vp.Point + (vp.FrontDirection * vp.CenterlineOffsetDist);
+                    vp.DaylightBoundariesPoints[1] = vp.Point + (vp.FrontDirection * vp.VantageStreet.CenterlineDistance);
                 }
                 var vp1 = orderedStreetVantagePts[0];
                 var vp2 = orderedStreetVantagePts[1];

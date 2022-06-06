@@ -128,8 +128,8 @@
   "element_types": [
     "https://prod-api.hypar.io/schemas/Envelope",
     "https://raw.githubusercontent.com/hypar-io/Schemas/master/Site.json",
-    "https://raw.githubusercontent.com/hypar-io/Schemas/daylight-evaluation/NYCDaylightEvaluationVantagePoint.json",
-    "https://raw.githubusercontent.com/hypar-io/Schemas/daylight-evaluation/NYCDaylightEvaluationVantageStreet.json",
+    "https://prod-api.hypar.io/schemas/NYCDaylightEvaluationVantagePoint",
+    "https://prod-api.hypar.io/schemas/NYCDaylightEvaluationVantageStreet",
     "https://prod-api.hypar.io/schemas/SVGGraphic",
     "https://prod-api.hypar.io/schemas/RhinoBrep",
     "https://prod-api.hypar.io/schemas/RhinoExtrusion"

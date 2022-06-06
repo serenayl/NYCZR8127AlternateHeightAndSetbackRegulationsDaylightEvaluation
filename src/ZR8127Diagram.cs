@@ -58,7 +58,7 @@ namespace NYCZR8127DaylightEvaluation
         public Diagram(VantagePoint vp)
         {
             this.vp = vp;
-            this.basePlanGrid = this.makePlanGrid(vp.CenterlineOffsetDist);
+            this.basePlanGrid = this.makePlanGrid(vp.VantageStreet.CenterlineDistance);
 
             this.svg.AddStyle("text", new SVG.Style(fontFamily: "Roboto,Helvetica,Arial,sans-serif", fill: Colors.Black));
 
@@ -309,7 +309,7 @@ namespace NYCZR8127DaylightEvaluation
             for (var distFromFarLot = 0.0; distFromFarLot <= 90; distFromFarLot++)
             {
                 var sectionAngle = distFromFarLot / 5 + 72;
-                var s = this.vp.CenterlineOffsetDist + Units.FeetToMeters(distFromFarLot);
+                var s = this.vp.VantageStreet.CenterlineDistance + Units.FeetToMeters(distFromFarLot);
                 var planAngle = VantagePoint.GetPlanAngle(s, VantagePoint.VantageDistance);
 
                 planSectionSets[0].Add(new Vector3(-planAngle, sectionAngle));
