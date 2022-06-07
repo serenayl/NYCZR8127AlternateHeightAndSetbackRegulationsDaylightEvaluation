@@ -21,6 +21,8 @@ namespace NYCZR8127DaylightEvaluation
             var start = 20;
             var end = aps.Count;
 
+            Console.WriteLine("Tracing:");
+
             for (var k = start; k < end; k++)
             {
                 var srfAP = aps[k];
@@ -41,6 +43,8 @@ namespace NYCZR8127DaylightEvaluation
                 var original = srfAP.Original;
                 var planAndSection = srfAP.PlanAndSection;
                 var drawCoordinate = srfAP.DrawCoordinate;
+
+                Console.WriteLine($"- {k}/{end}: {srfAP.Original} & {srfAP.PlanAndSection}");
 
                 var polyline = new Polyline(origin, original, planAndSection, drawCoordinate);
 

@@ -58,6 +58,9 @@ namespace NYCZR8127DaylightEvaluation
 
                 var vIdx = 0;
 
+                // Only add points where face is not sitting on Z = 0
+                var pointNotZero = false;
+
                 foreach (var startVertex in vertices)
                 {
                     var endVertex = vIdx == vertices.Count - 1 ? vertices[0] : vertices[vIdx + 1];
@@ -66,6 +69,8 @@ namespace NYCZR8127DaylightEvaluation
                     var higherVertex = startVertex.Index > endVertex.Index ? startVertex : endVertex;
 
                     var lineIdUniq = $"{lowerVertex.Index}_{higherVertex.Index}";
+
+                    pointNotZero = pointNotZero || (this.Points[lowerVertex.Index].Z != 0.0 || this.Points[higherVertex.Index].Z != 0.0);
 
                     if (!edgeLookup.ContainsKey(lineIdUniq))
                     {
@@ -82,7 +87,9 @@ namespace NYCZR8127DaylightEvaluation
 
                     vIdx += 1;
                 }
-                this.Surfaces.Add(edges);
+                if (pointNotZero) {
+                    this.Surfaces.Add(edges);
+                }
                 tIdx += 1;
             }
         }
