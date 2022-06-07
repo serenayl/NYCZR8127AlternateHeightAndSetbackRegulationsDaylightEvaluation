@@ -26,7 +26,6 @@ namespace NYCZR8127DaylightEvaluation
         public Polyline Centerline;
         public Line NearLotLine;
         public Line FarLotLine;
-        public Line FrontLotLine;
         public Line RearLotLine;
 
         public Domain1d DaylightBoundaries;
@@ -66,15 +65,10 @@ namespace NYCZR8127DaylightEvaluation
 
             var lotLinesBySDist = new List<Line>(vantageStreet.LotLines).OrderBy(line => this.GetS(line.PointAt(0.5))).ToList();
 
-            this.FrontLotLine = lotLinesBySDist[0];
             this.RearLotLine = lotLinesBySDist[3];
 
-            if (this.FrontLotLine != vantageStreet.FrontLotLine) {
-                throw new Exception("Front lot lines are not matching. Please contact the function author with this example!");
-            }
-
             var move = -1 * this.FrontDirection * vantageStreet.CenterlineDistance;
-            var points = new List<Vector3>() { this.FrontLotLine.Start + move, this.FrontLotLine.End + move };
+            var points = new List<Vector3>() { this.VantageStreet.FrontLotLine.Start + move, this.VantageStreet.FrontLotLine.End + move };
             this.Centerline = new Polyline(points);
 
             var nearFarLines = new List<Line>() { lotLinesBySDist[1], lotLinesBySDist[2] }.OrderBy(line => Math.Abs(this.GetD(line.PointAt(0.5)))).ToList();
@@ -225,7 +219,7 @@ namespace NYCZR8127DaylightEvaluation
                 foreach (var vp in orderedStreetVantagePts)
                 {
                     var nearPointOnNearLot = new List<Vector3>() { vp.NearLotLine.Start, vp.NearLotLine.End }.OrderBy(pt => pt.DistanceTo(vp.Point)).ToList()[0];
-                    var frontageLength = vp.FrontLotLine.Length();
+                    var frontageLength = vp.VantageStreet.FrontLotLine.Length();
                     if (frontageLength > VantageDistance)
                     {
                         // 81-275 Special Conditions a.1: length of street frontage > 250ft and < 500ft

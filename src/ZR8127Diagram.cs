@@ -695,8 +695,8 @@ namespace NYCZR8127DaylightEvaluation
         {
             var vertices = new List<Vector3>(){
                 this.vp.Point,
-                this.vp.FrontLotLine.Start,
-                this.vp.FrontLotLine.End,
+                this.vp.VantageStreet.FrontLotLine.Start,
+                this.vp.VantageStreet.FrontLotLine.End,
                 this.vp.RearLotLine.Start,
                 this.vp.RearLotLine.End,
                 this.vp.NearLotLine.Start,
@@ -712,7 +712,7 @@ namespace NYCZR8127DaylightEvaluation
             var maxOriginalSize = Math.Max(boundaries.Max.X - boundaries.Min.X, boundaries.Max.Y - boundaries.Min.Y);
             var factor = maxSize / maxOriginalSize;
 
-            foreach (var line in new List<Line> { this.vp.FrontLotLine, this.vp.RearLotLine, this.vp.NearLotLine, this.vp.FarLotLine })
+            foreach (var line in new List<Line> { this.vp.VantageStreet.FrontLotLine, this.vp.RearLotLine, this.vp.NearLotLine, this.vp.FarLotLine })
             {
                 this.svg.AddGeometry(new Polyline(new List<Vector3>(){
                     (line.Start - boundaries.Min) * factor + startPoint,

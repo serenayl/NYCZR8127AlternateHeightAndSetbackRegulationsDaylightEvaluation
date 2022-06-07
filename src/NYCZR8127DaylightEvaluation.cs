@@ -94,7 +94,8 @@ namespace NYCZR8127DaylightEvaluation
 
             foreach (var vantageStreet in input.VantageStreets)
             {
-                var outputVantageStreet = VantageElementUtils.CreateVantageStreet(siteRect, vantageStreet, out var vantagePoints, model);
+                var matchingOverride = input.Overrides?.VantageStreets.FirstOrDefault(x => x.Identity.Name == vantageStreet.Name);
+                var outputVantageStreet = VantageElementUtils.CreateVantageStreet(siteRect, vantageStreet, out var vantagePoints, matchingOverride, model);
 
                 int vpIndex = 0;
 
@@ -114,7 +115,7 @@ namespace NYCZR8127DaylightEvaluation
 
                 var sumScores = vantagePoints.Aggregate(0.0, (sum, vp) => sum + vp.Diagram.DaylightScore);
                 var vantageStreetScore = sumScores / vantagePoints.Count;
-                var vantageStreetLength = vantagePoints[0].FrontLotLine.Length();
+                var vantageStreetLength = outputVantageStreet.FrontLotLine.Length();
 
                 streetScores.Add(vantageStreetScore);
                 streetLengths += vantageStreetLength;
@@ -167,7 +168,7 @@ namespace NYCZR8127DaylightEvaluation
             return site;
         }
 
-        private static List<T> getElementsOfType<T>(Model model) where T: Elements.Element
+        private static List<T> getElementsOfType<T>(Model model) where T : Elements.Element
         {
             if (model == null)
             {

@@ -11,7 +11,7 @@ namespace NYCZR8127DaylightEvaluation
         /// <summary>
         /// Create an output vantage street from an input vantage street.
         /// </summary>
-        public static NYCDaylightEvaluationVantageStreet CreateVantageStreet(Polygon rectangularSite, VantageStreets vantageStreet, out List<VantagePoint> vantagePoints, Model model = null)
+        public static NYCDaylightEvaluationVantageStreet CreateVantageStreet(Polygon rectangularSite, VantageStreets vantageStreet, out List<VantagePoint> vantagePoints, VantageStreetsOverride ovd = null, Model model = null)
         {
             if (vantageStreet.Line == null)
             {
@@ -20,13 +20,16 @@ namespace NYCZR8127DaylightEvaluation
             var siteCentroid = rectangularSite.Centroid();
             var midpoint = vantageStreet.Line.PointAt(0.5);
             var lotLines = new List<Line>(rectangularSite.Segments()).OrderBy(segment => midpoint.DistanceTo(segment.PointAt(0.5))).ToList();
-            var frontLotLine = lotLines[0];
+            var frontLotLine = ovd?.Value.FrontLotLine ?? lotLines[0];
             var centerlineOffsetDist = Settings.CenterlineDistances[vantageStreet.Width] / 2;
             var directionToStreet = new Vector3(frontLotLine.PointAt(0.5) - siteCentroid).Unitized() * centerlineOffsetDist;
             var centerline = new Line(frontLotLine.Start + directionToStreet, frontLotLine.End + directionToStreet);
-            var outputVantageStreet = new NYCDaylightEvaluationVantageStreet(0, centerlineOffsetDist, frontLotLine, centerline, vantageStreet.StreetWallContinuity, lotLines, Units.FeetToMeters(vantageStreet.BlockDepthInFeet));
-
+            var outputVantageStreet = new NYCDaylightEvaluationVantageStreet(0, centerlineOffsetDist, frontLotLine, centerline, vantageStreet.StreetWallContinuity, lotLines, Units.FeetToMeters(vantageStreet.BlockDepthInFeet), name: vantageStreet.Name);
+            if (ovd != null) {
+                outputVantageStreet.AddOverrideIdentity(ovd);
+            }
             vantagePoints = VantagePoint.GetVantagePoints(outputVantageStreet, model);
+
             return outputVantageStreet;
         }
 

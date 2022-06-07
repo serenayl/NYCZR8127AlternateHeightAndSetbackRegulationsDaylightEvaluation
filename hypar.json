@@ -134,6 +134,21 @@
     "https://prod-api.hypar.io/schemas/RhinoBrep",
     "https://prod-api.hypar.io/schemas/RhinoExtrusion"
   ],
+  "overrides": {
+    "Vantage Streets": {
+      "context": "[*discriminator=Elements.NYCDaylightEvaluationVantageStreet]",
+      "identity": {
+        "Name": {
+          "type": "string"
+        }
+      },
+      "schema": {
+        "FrontLotLine": {
+          "$ref": "https://hypar.io/Schemas/Geometry/Line.json"
+        }
+      }
+    }
+  },
   "repository_url": "",
   "source_file_key": null,
   "preview_image": null
