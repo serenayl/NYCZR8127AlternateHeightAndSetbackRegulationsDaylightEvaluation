@@ -27,6 +27,7 @@ namespace NYCZR8127DaylightEvaluation
         private static (string, SVG.Style) profileCurveStyle = ("profile-curves", Settings.SvgStyles[Settings.MaterialPalette.ProfileCurves]);
         private static (string, SVG.Style) profileEncroachmentStyle = ("profile-encroachment", Settings.SvgStyles[Settings.MaterialPalette.ProfileEncroachment]);
         private static (string, SVG.Style) unblockedCreditStyle = ("unblocked-credit", Settings.SvgStyles[Settings.MaterialPalette.UnblockedCredit]);
+        private static (string, SVG.Style) debugLineStyle = ("debug-line", Settings.SvgStyles[Settings.MaterialPalette.DebugLines]);
 
         private static Grid1d sectionGrid1d = makeSectionGrid();
         #endregion PrivateStatics
@@ -85,6 +86,7 @@ namespace NYCZR8127DaylightEvaluation
             this.svg.AddStyle($"path.{profileCurveStyle.Item1}", profileCurveStyle.Item2);
             this.svg.AddStyle($"path.{profileEncroachmentStyle.Item1}", profileEncroachmentStyle.Item2);
             this.svg.AddStyle($"path.{unblockedCreditStyle.Item1}", unblockedCreditStyle.Item2);
+            this.svg.AddStyle($"path.{debugLineStyle.Item1}", debugLineStyle.Item2);
         }
 
         #region PrivateUtils
@@ -450,15 +452,17 @@ namespace NYCZR8127DaylightEvaluation
         /// <summary>
         /// Returns raw silhouettes, and out param is the silhouettes to draw depending on whether we are using raw angles to draw
         /// </summary>
-        private List<Polygon> calculateSilhouettes(List<SolidAnalysisObject> analysisObjects, out List<Polygon> drawSilhouettes, out List<Polyline> drawPolylines, Boolean useRawAngles = false)
+        private List<Polygon> calculateSilhouettes(List<SolidAnalysisObject> analysisObjects, out List<Polygon> drawSilhouettes, out List<Polyline> drawPolylines, out List<Polyline> debugLines, Boolean useRawAngles = false, Model model = null)
         {
             var rawPolygons = new List<Polygon>();
             var drawPolygons = new List<Polygon>();
 
             drawPolylines = new List<Polyline>();
+            debugLines = new List<Polyline>();
 
-            foreach (var analysisObject in analysisObjects)
+            for (var i = 0; i < analysisObjects.Count; i++)
             {
+                var analysisObject = analysisObjects[i];
                 var analysisPoints = new Dictionary<long, AnalysisPoint>();
 
                 foreach (var point in analysisObject.Points)
@@ -482,14 +486,11 @@ namespace NYCZR8127DaylightEvaluation
                     edges.Add(lineMapping.Key, edgePoints);
                 }
 
-                // var i = 0;
+                var errs = 0;
 
-                // var red = new Material("Red", new Color(1, 0, 0, 0.2));
-                // var green = new Material("Green", new Color(0, 1, 0, 0.2));
-
-                foreach (var surface in analysisObject.Surfaces)
+                for (var j = 0; j < analysisObject.Surfaces.Count; j++)
                 {
-                    // i += 1;
+                    var surface = analysisObject.Surfaces[j];
                     var srfAPs = new List<AnalysisPoint>();
 
                     foreach (var analysisEdge in surface)
@@ -525,7 +526,7 @@ namespace NYCZR8127DaylightEvaluation
                             {
                                 try
                                 {
-                                    var drawPolygon = new Polygon(srfAPs.Select(ap => ap.DrawCoordinate).ToArray());
+                                    var drawPolygon = new Polygon(srfAPs.Select(ap => ap.DrawCoordinate).ToList());
                                     if (drawPolygon.IsClockWise())
                                     {
                                         drawPolygon = drawPolygon.Reversed();
@@ -545,6 +546,9 @@ namespace NYCZR8127DaylightEvaluation
                     catch (ArgumentException e)
                     {
                         Console.WriteLine($"Failure to create raw polygon: {e.Message}");
+                        // Console.WriteLine($"Problem is: {i}, {j}");
+                        // DebugUtilities.Trace($"{i},{j}", srfAPs, vp, model);
+                        errs += 1;
                     }
                 }
 
@@ -629,8 +633,8 @@ namespace NYCZR8127DaylightEvaluation
         {
             var resultStartPoint = this.drawGrid(useRawAngles);
 
-            var rawSilhouettes = this.calculateSilhouettes(analysisObjects, out var drawSilhouettes, out var drawPolylines, useRawAngles);
-            var blockageSilhouettes = analysisObjectsForBlockage == null ? rawSilhouettes : this.calculateSilhouettes(analysisObjectsForBlockage, out var drawSilhouettesBlockage, out var drawPolylinesBlockage, useRawAngles);
+            var rawSilhouettes = this.calculateSilhouettes(analysisObjects, out var drawSilhouettes, out var drawPolylines, out var debugLines, useRawAngles, model);
+            var blockageSilhouettes = analysisObjectsForBlockage == null ? rawSilhouettes : this.calculateSilhouettes(analysisObjectsForBlockage, out var drawSilhouettesBlockage, out var drawPolylinesBlockage, out var debugLinesBlockage, useRawAngles, model);
 
             this.DaylightBlockage = this.calculateDaylightBlockage(blockageSilhouettes, out var blockedDaylightSubsquares);
             this.UnblockedDaylightCredit = this.calculateUnblockedDaylight(rawSilhouettes, input, out var unblockedSubsquares);
@@ -651,6 +655,11 @@ namespace NYCZR8127DaylightEvaluation
             foreach (var silhouette in drawSilhouettes)
             {
                 this.svg.AddGeometry(silhouette, buildingSilhouette.Item1);
+            }
+
+            foreach (var polyline in debugLines)
+            {
+                this.svg.AddGeometry(polyline, debugLineStyle.Item1);
             }
 
             Console.WriteLine("--- ANALYSIS ---");

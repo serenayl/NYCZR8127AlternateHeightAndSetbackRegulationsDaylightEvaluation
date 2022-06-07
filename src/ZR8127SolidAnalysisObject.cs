@@ -26,6 +26,9 @@ namespace NYCZR8127DaylightEvaluation
 
         private static double DivisionLength = Units.FeetToMeters(10.0);
         public static Boolean SkipSubdivide = false;
+        /// <summary>
+        /// Original point locations
+        /// </summary>
         public Dictionary<long, Vector3> Points = new Dictionary<long, Vector3>();
         public Dictionary<long, List<long>> Lines = new Dictionary<long, List<long>>();
         public List<List<AnalysisEdge>> Surfaces = new List<List<AnalysisEdge>>();
@@ -106,13 +109,19 @@ namespace NYCZR8127DaylightEvaluation
             foreach (var face in solid.Solid.Faces.Values)
             {
                 var edges = new List<AnalysisEdge>();
+                // Only add points where face is not sitting on Z = 0
+                var pointNotZero = false;
                 foreach (var edge in face.Outer.Edges)
                 {
                     var isReversed = edge.Vertex.Id != edge.Edge.Left.Vertex.Id;
                     edges.Add(new AnalysisEdge(edge.Edge.Id, isReversed));
+                    pointNotZero = pointNotZero || this.Points.GetValueOrDefault(edge.Vertex.Id).Z != 0;
+                    this.Points.GetValueOrDefault(edge.Edge.Left.Vertex.Id);
                 }
-                // TODO: do not include faces that sit at zero
-                this.Surfaces.Add(edges);
+                if (pointNotZero)
+                {
+                    this.Surfaces.Add(edges);
+                }
             }
         }
 

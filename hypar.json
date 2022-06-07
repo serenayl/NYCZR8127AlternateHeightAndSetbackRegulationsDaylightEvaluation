@@ -92,7 +92,7 @@
             },
             "Name": {
               "type": "string",
-              "description": "Name of your vantage street",
+              "description": "Name of your vantage street. If you are using vantage street overrides, this MUST be unique!",
               "default": "My Street Name"
             }
           }

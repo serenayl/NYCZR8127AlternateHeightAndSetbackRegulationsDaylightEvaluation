@@ -8,6 +8,7 @@ namespace NYCZR8127DaylightEvaluation
     {
         public enum MaterialPalette
         {
+            DebugLines = -1,
             Silhouette = 0,
             BuildingEdges = 1,
             GridlinesMajor = 10,
@@ -30,7 +31,8 @@ namespace NYCZR8127DaylightEvaluation
             {MaterialPalette.ProfileCurves, new SVG.Style(strokeWidth:0.2, stroke: Colors.Red, fill: TransparentColor)},
             {MaterialPalette.BlockedDaylight, new SVG.Style(strokeWidth:0, fill: new Color(1, 0.75, 0, 0.75))},
             {MaterialPalette.ProfileEncroachment, new SVG.Style(strokeWidth:0, fill: new Color(1, 0, 0, 0.75))},
-            {MaterialPalette.UnblockedCredit, new SVG.Style(strokeWidth:0, fill: new Color(0, 1, 0, 0.75))}
+            {MaterialPalette.UnblockedCredit, new SVG.Style(strokeWidth:0, fill: new Color(0, 1, 0, 0.75))},
+            {MaterialPalette.DebugLines, new SVG.Style(strokeWidth:2, stroke: Colors.Magenta, fill: TransparentColor)}
         };
 
         public static Dictionary<VantageStreetsWidth, double> CenterlineDistances => new Dictionary<VantageStreetsWidth, double> {

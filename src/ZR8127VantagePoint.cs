@@ -8,9 +8,20 @@ namespace NYCZR8127DaylightEvaluation
 {
     public class AnalysisPoint
     {
+        /// <summary>
+        /// Raw plan and section angles.
+        /// </summary>
         public Vector3 PlanAndSection;
 
+        /// <summary>
+        /// Projected coordinate to draw it on.
+        /// </summary>
         public Vector3 DrawCoordinate;
+
+        /// <summary>
+        /// Original location of point in space (optional: only available if we calculated this from an original location).
+        /// </summary>
+        public Vector3 Original;
 
         public AnalysisPoint(double plan, double section)
         {
@@ -86,7 +97,9 @@ namespace NYCZR8127DaylightEvaluation
             var h = point.Z;
             var planAngle = GetPlanAngle(s, d);
             var sectionAngle = GetSectionAngle(h, s);
-            return this.GetAnalysisPoint(planAngle, sectionAngle, useDebugVisualization);
+            var ap = this.GetAnalysisPoint(planAngle, sectionAngle, useDebugVisualization);
+            ap.Original = point;
+            return ap;
         }
 
         public AnalysisPoint GetAnalysisPoint(double planAngle, double sectionAngle, Boolean useDebugVisualization = false)

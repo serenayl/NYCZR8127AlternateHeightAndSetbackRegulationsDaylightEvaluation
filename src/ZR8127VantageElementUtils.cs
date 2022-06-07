@@ -20,9 +20,10 @@ namespace NYCZR8127DaylightEvaluation
             var siteCentroid = rectangularSite.Centroid();
             var midpoint = vantageStreet.Line.PointAt(0.5);
             var lotLines = new List<Line>(rectangularSite.Segments()).OrderBy(segment => midpoint.DistanceTo(segment.PointAt(0.5))).ToList();
-            var frontLotLine = ovd?.Value.FrontLotLine ?? lotLines[0];
+            var originalFrontLotLine = lotLines[0];
+            var frontLotLine = ovd?.Value.FrontLotLine ?? originalFrontLotLine;
             var centerlineOffsetDist = Settings.CenterlineDistances[vantageStreet.Width] / 2;
-            var directionToStreet = new Vector3(frontLotLine.PointAt(0.5) - siteCentroid).Unitized() * centerlineOffsetDist;
+            var directionToStreet = new Vector3(originalFrontLotLine.PointAt(0.5) - siteCentroid).Unitized() * centerlineOffsetDist;
             var centerline = new Line(frontLotLine.Start + directionToStreet, frontLotLine.End + directionToStreet);
             var outputVantageStreet = new NYCDaylightEvaluationVantageStreet(0, centerlineOffsetDist, frontLotLine, centerline, vantageStreet.StreetWallContinuity, lotLines, Units.FeetToMeters(vantageStreet.BlockDepthInFeet), name: vantageStreet.Name);
             if (ovd != null) {
