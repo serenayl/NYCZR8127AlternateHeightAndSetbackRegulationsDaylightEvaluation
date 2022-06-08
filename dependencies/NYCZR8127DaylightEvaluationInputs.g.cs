@@ -117,7 +117,7 @@ namespace NYCZR8127DaylightEvaluation
         [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
         public VantageStreetsWidth Width { get; set; } = VantageStreetsWidth._60ft;
     
-        /// <summary>Name of your vantage street</summary>
+        /// <summary>Name of your vantage street. If you are using vantage street overrides, this MUST be unique!</summary>
         [Newtonsoft.Json.JsonProperty("Name", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Name { get; set; } = "My Street Name";
     

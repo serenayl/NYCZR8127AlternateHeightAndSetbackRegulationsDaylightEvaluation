@@ -149,6 +149,15 @@
       }
     }
   },
+  "messages": {
+    "en": {
+        "overrides": {
+            "Vantage Streets": {
+                "name": "Front Lot Lines"
+            }
+        }
+    }
+},
   "repository_url": "",
   "source_file_key": null,
   "preview_image": null

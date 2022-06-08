@@ -51,6 +51,11 @@ namespace NYCZR8127DaylightEvaluation
         public static double VantageDistance = Units.FeetToMeters(VantageDistanceInFt);
         private static double longCenterlineLength = VantageDistance * 2;
 
+        private static Dictionary<string, Material> materials = new Dictionary<string, Material> {
+            {"VP Start", new Material("VP Start", Colors.Red) { EdgeDisplaySettings = new EdgeDisplaySettings { LineWidth = 2 } } },
+            {"VP Front", new Material("VP Front", Colors.Blue) { EdgeDisplaySettings = new EdgeDisplaySettings { LineWidth = 2 } }},
+        };
+
         public VantagePoint(
             NYCDaylightEvaluationVantageStreet vantageStreet,
             Vector3 point,
@@ -198,24 +203,34 @@ namespace NYCZR8127DaylightEvaluation
                 vp.Diagram.CalculateProfileCurvesAndBoundingSquares();
             }
 
-            // Visualize if we are able to
-            if (model != null)
-            {
-                model.AddElement(new ModelCurve(outputVantageStreet.Centerline));
-
-                foreach (var vp in vantagePoints)
-                {
-                    model.AddElement(new ModelCurve(new Circle(vp.Point, 1.0).ToPolygon()));
-                    model.AddElement(new ModelCurve(new Line(vp.Point, vp.Point + vp.StartDirection), new Material("red", Colors.Red)));
-                    model.AddElement(new ModelCurve(new Line(vp.Point, vp.Point + vp.FrontDirection), new Material("blue", Colors.Blue)));
-                }
-            }
-
             return vantagePoints;
+        }
+
+        public Polyline GetViewCone()
+        {
+            Console.WriteLine($"Get View Cone: {this.DaylightBoundariesPoints[0]} to {this.Point} to {this.DaylightBoundariesPoints[1]}");
+            var polyline = new Polyline(new List<Vector3>(){
+                this.DaylightBoundariesPoints[0],
+                this.Point,
+                this.DaylightBoundariesPoints[1],
+            });
+            return polyline;
+        }
+
+        public ModelArrows GetVisualizationHelpers()
+        {
+            var arrows = new ModelArrows(new List<(Vector3 location, Vector3 direction, double magnitude, Color? color)>() {
+                (this.Point, this.StartDirection, 1.0, materials.GetValueOrDefault("VP Start", null).Color),
+                (this.Point, this.FrontDirection, 1.0, materials.GetValueOrDefault("VP Front", null).Color),
+                (this.Point, this.VantageStreet.Centerline.PointAt(0.5) - this.Point, 1,this.VantageStreet.Material.Color),
+            });
+            return arrows;
         }
 
         private static void calculateDaylightBoundaries(NYCDaylightEvaluationVantageStreet vantageStreet, List<VantagePoint> orderedStreetVantagePts, Model model = null)
         {
+            Console.WriteLine("Calculate Daylight Boundaries");
+
             if (orderedStreetVantagePts.Count < 2 || orderedStreetVantagePts.Count > 3)
             {
                 throw new Exception($"Vantage streets must have a minimum of two and a maximum of three vantage points. {orderedStreetVantagePts.Count} vantage points were found.");

@@ -95,7 +95,12 @@ namespace NYCZR8127DaylightEvaluation
             foreach (var vantageStreet in input.VantageStreets)
             {
                 var matchingOverride = input.Overrides?.VantageStreets.FirstOrDefault(x => x.Identity.Name == vantageStreet.Name);
+
+                var color = DebugUtilities.random.NextColor();
+                var vantageStreetMaterial = new Material($"Vantage Street {vantageStreet.Name}", color) { EdgeDisplaySettings = new EdgeDisplaySettings { LineWidth = 2 } };
+                var vantagePointMaterial = new Material($"Vantage Point on {vantageStreet.Name}", new Color(color.Red, color.Green, color.Blue, 0.15)) { EdgeDisplaySettings = new EdgeDisplaySettings { LineWidth = 2 } };
                 var outputVantageStreet = VantageElementUtils.CreateVantageStreet(siteRect, vantageStreet, out var vantagePoints, matchingOverride, model);
+                outputVantageStreet.Material = vantageStreetMaterial;
 
                 int vpIndex = 0;
 
@@ -107,8 +112,24 @@ namespace NYCZR8127DaylightEvaluation
 
                     vp.Diagram.Draw(name, model, analysisObjects, input, input.DebugVisualization, analysisObjectsForBlockage: analysisObjectsForBlockage);
 
-                    // var outputVp = new NYCDaylightEvaluationVantagePoint(vp.Point, vp.Diagram.DaylightBlockage, vp.Diagram.UnblockedDaylightCredit, vp.Diagram.ProfilePenalty, vp.Diagram.AvailableDaylight, vp.Diagram.DaylightRemaining, vp.Diagram.DaylightScore, name: name);
-                    // model.AddElement(outputVp);
+                    var outputVp = new NYCDaylightEvaluationVantagePoint(
+                        vp.Diagram.DaylightBlockage,
+                        vp.Diagram.UnblockedDaylightCredit,
+                        vp.Diagram.ProfilePenalty,
+                        vp.Diagram.AvailableDaylight,
+                        vp.Diagram.DaylightRemaining,
+                        vp.Diagram.DaylightScore,
+                        outputVantageStreet,
+                        material: vantagePointMaterial,
+                        name: name
+                    );
+                    outputVp.SetViz(vp.GetViewCone());
+                    model.AddElement(outputVp);
+
+                    var vpHelper = vp.GetVisualizationHelpers();
+                    vpHelper.Name = $"{outputVp.Name} Helper";
+                    // vpHelper.AdditionalProperties["Target"] = outputVp.Id; // makes interface too messy
+                    model.AddElement(vpHelper);
 
                     vpIndex += 1;
                 }
