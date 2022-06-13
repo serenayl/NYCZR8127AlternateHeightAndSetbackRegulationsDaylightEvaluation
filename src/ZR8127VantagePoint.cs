@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Elements;
+using Elements.Annotations;
 using Elements.Geometry;
 using System.Linq;
 
@@ -158,6 +159,7 @@ namespace NYCZR8127DaylightEvaluation
             var vantagePoints = new List<VantagePoint>();
             var ninetyDegreeDirection = (outputVantageStreet.FrontLotLine.PointAt(0.5) - outputVantageStreet.Centerline.PointAt(0.5)).Unitized();
             var hasThirdVantagePoint = outputVantageStreet.Centerline.Length() > longCenterlineLength;
+            var dimOffset = 5;
 
             // VP 1
             var base1 = new Vector3(outputVantageStreet.Centerline.Start);
@@ -170,6 +172,8 @@ namespace NYCZR8127DaylightEvaluation
                 ninetyDegreeDirection
             );
             vantagePoints.Add(vp1);
+            var dim1 = new AlignedDimension(base1, origin1, dimOffset, ninetyDegreeDirection * -1);
+            model?.AddElement(dim1);
 
             // VP 2
             var base2 = new Vector3(outputVantageStreet.Centerline.End);
@@ -182,6 +186,8 @@ namespace NYCZR8127DaylightEvaluation
                 ninetyDegreeDirection
             );
             vantagePoints.Add(vp2);
+            var dim2 = new AlignedDimension(base2, origin2, hasThirdVantagePoint ? dimOffset : dimOffset * 2, ninetyDegreeDirection * -1);
+            model?.AddElement(dim2);
 
             if (hasThirdVantagePoint)
             {
@@ -264,7 +270,7 @@ namespace NYCZR8127DaylightEvaluation
 
                         // Move intersection point of the near lot line and front lot line
                         // towards the rear, to the lesser of 100' or the outputVantageStreet.Centerline of the block from the front lot line
-                        var pointForBounds = nearPointOnNearLot + vp.FrontDirection * Math.Min(Units.FeetToMeters(100), vp.VantageStreet.BlockDepth/2);
+                        var pointForBounds = nearPointOnNearLot + vp.FrontDirection * Math.Min(Units.FeetToMeters(100), vp.VantageStreet.BlockDepth / 2);
                         vp.DaylightBoundariesPoints[1] = pointForBounds;
                     }
                 }
