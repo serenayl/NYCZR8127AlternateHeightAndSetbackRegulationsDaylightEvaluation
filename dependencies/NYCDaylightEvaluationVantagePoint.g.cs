@@ -24,31 +24,26 @@ namespace Elements
     /// <summary>A vantage point for use with NYC ZR 81-27.</summary>
     [JsonConverter(typeof(Elements.Serialization.JSON.JsonInheritanceConverter), "discriminator")]
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "10.1.21.0 (Newtonsoft.Json v12.0.0.0)")]
-    public partial class DaylightEvaluationVantagePoint : Element
+    public partial class NYCDaylightEvaluationVantagePoint : GeometricElement
     {
         [JsonConstructor]
-        public DaylightEvaluationVantagePoint(Vector3 @position, double @daylightBlockage, double @unblockedDaylightCredit, double @profileDaylightBlockage, double @availableDaylight, double @daylightRemaining, double @daylightScore, System.Guid @id = default, string @name = null)
-            : base(id, name)
+        public NYCDaylightEvaluationVantagePoint(double @daylightBlockage, double @unblockedDaylightCredit, double @profileDaylightBlockage, double @availableDaylight, double @daylightRemaining, double @daylightScore, NYCDaylightEvaluationVantageStreet @vantageStreet, Transform @transform = null, Material @material = null, Representation @representation = null, bool @isElementDefinition = false, System.Guid @id = default, string @name = null)
+            : base(transform, material, representation, isElementDefinition, id, name)
         {
-            this.Position = @position;
             this.DaylightBlockage = @daylightBlockage;
             this.UnblockedDaylightCredit = @unblockedDaylightCredit;
             this.ProfileDaylightBlockage = @profileDaylightBlockage;
             this.AvailableDaylight = @availableDaylight;
             this.DaylightRemaining = @daylightRemaining;
             this.DaylightScore = @daylightScore;
+            this.VantageStreet = @vantageStreet;
             }
         
         // Empty constructor
-        public DaylightEvaluationVantagePoint()
+        public NYCDaylightEvaluationVantagePoint()
             : base()
         {
         }
-    
-        /// <summary>The position of the vantage point.</summary>
-        [JsonProperty("Position", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required]
-        public Vector3 Position { get; set; } = new Vector3();
     
         /// <summary>Count the number of blocked daylight squares and subsquares which are above the curved line representing an elevation of 70 degrees. A negative sign is to be given to this number.</summary>
         [JsonProperty("DaylightBlockage", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
@@ -73,6 +68,10 @@ namespace Elements
         /// <summary>Compute the remaining daylight score from paragraph (f) of this Section, as a percentage of the available daylight from paragraph (e) of this Section. The percentage is the daylight score for the proposed building from that vantage point.</summary>
         [JsonProperty("DaylightScore", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public double DaylightScore { get; set; }
+    
+        /// <summary>Associated Vantage Street for this Vantage Point.</summary>
+        [JsonProperty("VantageStreet", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public NYCDaylightEvaluationVantageStreet VantageStreet { get; set; }
     
     
     }

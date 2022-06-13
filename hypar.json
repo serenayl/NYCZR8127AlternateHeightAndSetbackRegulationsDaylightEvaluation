@@ -92,7 +92,7 @@
             },
             "Name": {
               "type": "string",
-              "description": "Name of your vantage street",
+              "description": "Name of your vantage street. If you are using vantage street overrides, this MUST be unique!",
               "default": "My Street Name"
             }
           }
@@ -128,12 +128,36 @@
   "element_types": [
     "https://prod-api.hypar.io/schemas/Envelope",
     "https://raw.githubusercontent.com/hypar-io/Schemas/master/Site.json",
-    "https://raw.githubusercontent.com/hypar-io/Schemas/daylight-evaluation/NYCDaylightEvaluationVantagePoint.json",
-    "https://raw.githubusercontent.com/hypar-io/Schemas/daylight-evaluation/NYCDaylightEvaluationVantageStreet.json",
+    "https://prod-api.hypar.io/schemas/NYCDaylightEvaluationVantagePoint",
+    "https://prod-api.hypar.io/schemas/NYCDaylightEvaluationVantageStreet",
     "https://prod-api.hypar.io/schemas/SVGGraphic",
     "https://prod-api.hypar.io/schemas/RhinoBrep",
     "https://prod-api.hypar.io/schemas/RhinoExtrusion"
   ],
+  "overrides": {
+    "Vantage Streets": {
+      "context": "[*discriminator=Elements.NYCDaylightEvaluationVantageStreet]",
+      "identity": {
+        "Name": {
+          "type": "string"
+        }
+      },
+      "schema": {
+        "FrontLotLine": {
+          "$ref": "https://hypar.io/Schemas/Geometry/Line.json"
+        }
+      }
+    }
+  },
+  "messages": {
+    "en": {
+        "overrides": {
+            "Vantage Streets": {
+                "name": "Front Lot Lines"
+            }
+        }
+    }
+},
   "repository_url": "",
   "source_file_key": null,
   "preview_image": null

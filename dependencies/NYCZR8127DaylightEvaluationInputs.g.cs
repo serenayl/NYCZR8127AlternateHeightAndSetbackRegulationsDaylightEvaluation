@@ -29,19 +29,20 @@ namespace NYCZR8127DaylightEvaluation
     {
         [Newtonsoft.Json.JsonConstructor]
         
-        public NYCZR8127DaylightEvaluationInputs(bool @qualifyForEastMidtownSubdistrict, bool @skipSubdivide, IList<VantageStreets> @vantageStreets, bool @debugVisualization, string bucketName, string uploadsBucket, Dictionary<string, string> modelInputKeys, string gltfKey, string elementsKey, string ifcKey):
+        public NYCZR8127DaylightEvaluationInputs(bool @qualifyForEastMidtownSubdistrict, bool @skipSubdivide, IList<VantageStreets> @vantageStreets, bool @debugVisualization, Overrides @overrides, string bucketName, string uploadsBucket, Dictionary<string, string> modelInputKeys, string gltfKey, string elementsKey, string ifcKey):
         base(bucketName, uploadsBucket, modelInputKeys, gltfKey, elementsKey, ifcKey)
         {
             var validator = Validator.Instance.GetFirstValidatorForType<NYCZR8127DaylightEvaluationInputs>();
             if(validator != null)
             {
-                validator.PreConstruct(new object[]{ @qualifyForEastMidtownSubdistrict, @skipSubdivide, @vantageStreets, @debugVisualization});
+                validator.PreConstruct(new object[]{ @qualifyForEastMidtownSubdistrict, @skipSubdivide, @vantageStreets, @debugVisualization, @overrides});
             }
         
             this.QualifyForEastMidtownSubdistrict = @qualifyForEastMidtownSubdistrict;
             this.SkipSubdivide = @skipSubdivide;
             this.VantageStreets = @vantageStreets;
             this.DebugVisualization = @debugVisualization;
+            this.Overrides = @overrides ?? this.Overrides;
         
             if(validator != null)
             {
@@ -65,6 +66,9 @@ namespace NYCZR8127DaylightEvaluation
         /// <summary>Visualize raw plan and section angles, rather than curved projections on a modified vertical scale. This is the grid and projection that is actually used to calculate all intersections and numbers, while the final curved version is for display. If East Midtown setting is on, this additionally displays the envelope(s) used to calculate blockages above 70 degrees in the chart.</summary>
         [Newtonsoft.Json.JsonProperty("Debug Visualization", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public bool DebugVisualization { get; set; }
+    
+        [Newtonsoft.Json.JsonProperty("overrides", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public Overrides Overrides { get; set; } = new Overrides();
     
     }
     
@@ -113,7 +117,7 @@ namespace NYCZR8127DaylightEvaluation
         [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
         public VantageStreetsWidth Width { get; set; } = VantageStreetsWidth._60ft;
     
-        /// <summary>Name of your vantage street</summary>
+        /// <summary>Name of your vantage street. If you are using vantage street overrides, this MUST be unique!</summary>
         [Newtonsoft.Json.JsonProperty("Name", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Name { get; set; } = "My Street Name";
     
@@ -125,6 +129,35 @@ namespace NYCZR8127DaylightEvaluation
             get { return _additionalProperties; }
             set { _additionalProperties = value; }
         }
+    }
+    
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "10.1.21.0 (Newtonsoft.Json v12.0.0.0)")]
+    
+    public partial class Overrides 
+    
+    {
+        public Overrides() { }
+        
+        [Newtonsoft.Json.JsonConstructor]
+        public Overrides(IList<VantageStreetsOverride> @vantageStreets)
+        {
+            var validator = Validator.Instance.GetFirstValidatorForType<Overrides>();
+            if(validator != null)
+            {
+                validator.PreConstruct(new object[]{ @vantageStreets});
+            }
+        
+            this.VantageStreets = @vantageStreets ?? this.VantageStreets;
+        
+            if(validator != null)
+            {
+                validator.PostConstruct(this);
+            }
+        }
+    
+        [Newtonsoft.Json.JsonProperty("Vantage Streets", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public IList<VantageStreetsOverride> VantageStreets { get; set; } = new List<VantageStreetsOverride>();
+    
     }
     
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "10.1.21.0 (Newtonsoft.Json v12.0.0.0)")]
@@ -144,6 +177,95 @@ namespace NYCZR8127DaylightEvaluation
     
         [System.Runtime.Serialization.EnumMember(Value = @"140ft (Park Avenue)")]
         _140ft__Park_Avenue_ = 4,
+    
+    }
+    
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "10.1.21.0 (Newtonsoft.Json v12.0.0.0)")]
+    
+    public partial class VantageStreetsOverride 
+    
+    {
+        [Newtonsoft.Json.JsonConstructor]
+        public VantageStreetsOverride(string @id, VantageStreetsIdentity @identity, VantageStreetsValue @value)
+        {
+            var validator = Validator.Instance.GetFirstValidatorForType<VantageStreetsOverride>();
+            if(validator != null)
+            {
+                validator.PreConstruct(new object[]{ @id, @identity, @value});
+            }
+        
+            this.Id = @id;
+            this.Identity = @identity;
+            this.Value = @value;
+        
+            if(validator != null)
+            {
+                validator.PostConstruct(this);
+            }
+        }
+    
+        [Newtonsoft.Json.JsonProperty("id", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string Id { get; set; }
+    
+        [Newtonsoft.Json.JsonProperty("Identity", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public VantageStreetsIdentity Identity { get; set; }
+    
+        [Newtonsoft.Json.JsonProperty("Value", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public VantageStreetsValue Value { get; set; }
+    
+    }
+    
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "10.1.21.0 (Newtonsoft.Json v12.0.0.0)")]
+    
+    public partial class VantageStreetsIdentity 
+    
+    {
+        [Newtonsoft.Json.JsonConstructor]
+        public VantageStreetsIdentity(string @name)
+        {
+            var validator = Validator.Instance.GetFirstValidatorForType<VantageStreetsIdentity>();
+            if(validator != null)
+            {
+                validator.PreConstruct(new object[]{ @name});
+            }
+        
+            this.Name = @name;
+        
+            if(validator != null)
+            {
+                validator.PostConstruct(this);
+            }
+        }
+    
+        [Newtonsoft.Json.JsonProperty("Name", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string Name { get; set; }
+    
+    }
+    
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "10.1.21.0 (Newtonsoft.Json v12.0.0.0)")]
+    
+    public partial class VantageStreetsValue 
+    
+    {
+        [Newtonsoft.Json.JsonConstructor]
+        public VantageStreetsValue(Line @frontLotLine)
+        {
+            var validator = Validator.Instance.GetFirstValidatorForType<VantageStreetsValue>();
+            if(validator != null)
+            {
+                validator.PreConstruct(new object[]{ @frontLotLine});
+            }
+        
+            this.FrontLotLine = @frontLotLine;
+        
+            if(validator != null)
+            {
+                validator.PostConstruct(this);
+            }
+        }
+    
+        [Newtonsoft.Json.JsonProperty("FrontLotLine", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public Line FrontLotLine { get; set; }
     
     }
 }
